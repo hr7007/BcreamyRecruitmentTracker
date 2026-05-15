@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>B'Creamy — Recruitment Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Nunito:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+/* ═══════════════════════════════════════════════════
+   B'CREAMY DESIGN SYSTEM — hr7007.github.io match
+═══════════════════════════════════════════════════ */
+:root {
+  /* Exact palette from the live site */
+  --hdr-bg:      #1C0A00;      /* near-black chocolate header */
+  --hdr-border:  #3D1F08;
+  --nav-bg:      #2A1005;      /* sub-nav dark */
+  --sidebar-bg:  #F9F3EA;
+  --page-bg:     #FDF8F2;
+  --card-bg:     #FFFFFF;
+  --accent:      #C8761A;      /* warm amber / caramel */
+  --accent-lt:   #E09840;      /* lighter gold */
+  --accent-dk:   #9C5610;
+  --cream:       #FDF8F2;
+  --cream-warm:  #F4E9D8;
+  --cream-mid:   #EDD9B8;
+  --border:      #E5D5BC;
+  --border-lt:   #F0E4CF;
+  --text:        #1A0900;
+  --text-mid:    #5C3D1E;
+  --text-lt:     #9B7050;
+  --text-faint:  #C4A882;
+  --success:     #1E6B3A;
+  --danger:      #8B1A10;
+  --info:        #15527A;
+  --warn:        #7A5208;
+  --locked-bg:   #0D0400;      /* admin lock screen */
+  --shadow-xs:   0 1px 3px rgba(28,10,0,.08);
+  --shadow-sm:   0 2px 8px rgba(28,10,0,.12);
+  --shadow-md:   0 6px 20px rgba(28,10,0,.16);
+  --shadow-lg:   0 16px 48px rgba(28,10,0,.24);
+  --r:           8px;
+  --r-lg:        12px;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+
+body{
+  font-family:'Nunito',sans-serif;
+  background:var(--page-bg);
+  color:var(--text);
+  min-height:100vh;
+}
+
+/* ══ HEADER — exact match to live site ══════════════════════ */
+.site-header{
+  background:var(--hdr-bg);
+  border-bottom:1px solid var(--hdr-border);
+  padding:0 28px;
+  height:62px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  position:sticky;top:0;z-index:300;
+  box-shadow:0 2px 16px rgba(0,0,0,.5);
+}
+
+.brand-group{
+  display:flex;align-items:center;gap:13px;
+}
+.brand-icon{
+  font-size:26px;line-height:1;
+  filter:drop-shadow(0 0 6px rgba(200,118,26,.4));
+}
+.brand-text{}
+.brand-name{
+  font-family:'Playfair Display',serif;
+  font-size:19px;font-weight:700;
+  color:#FFFFFF;
+  letter-spacing:.03em;
+  line-height:1.1;
+}
+.brand-name span{color:var(--accent-lt)}
+.brand-tag{
+  font-size:9.5px;font-weight:600;
+  letter-spacing:.18em;text-transform:uppercase;
+  color:var(--text-faint);
+  margin-top:1px;
+}
+
+.header-nav{
+  display:flex;align-items:center;gap:6px;
+}
+.hdr-btn{
+  display:flex;align-items:center;gap:6px;
+  padding:7px 14px;
+  background:transparent;
+  border:1px solid transparent;
+  border-radius:20px;
+  font-family:'Nunito',sans-serif;
+  font-size:12px;font-weight:600;
+  letter-spacing:.05em;text-transform:uppercase;
+  color:rgba(255,255,255,.55);
+  cursor:pointer;
+  transition:all .2s;
+}
+.hdr-btn:hover{color:rgba(255,255,255,.9);background:rgba(255,255,255,.06)}
+.hdr-btn.admin-btn{
+  color:var(--accent-lt);
+  border-color:rgba(200,118,26,.35);
+  background:rgba(200,118,26,.08);
+}
+.hdr-btn.admin-btn:hover{background:rgba(200,118,26,.18);border-color:rgba(200,118,26,.6)}
+.hdr-btn.admin-btn.unlocked{
+  background:var(--accent);
+  border-color:var(--accent);
+  color:#fff;
+}
+.hdr-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:#4CAF50;
+  animation:blink 2.5s ease infinite;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ══ TAB BAR ═════════════════════════════════════════════════ */
+.tab-bar{
+  background:var(--nav-bg);
+  border-bottom:1px solid var(--hdr-border);
+  padding:0 28px;
+  display:flex;gap:0;
+  overflow-x:auto;
+}
+.tab{
+  padding:14px 20px;
+  background:none;border:none;
+  font-family:'Nunito',sans-serif;
+  font-size:12.5px;font-weight:600;
+  letter-spacing:.04em;text-transform:uppercase;
+  color:rgba(255,255,255,.4);
+  cursor:pointer;
+  border-bottom:2px solid transparent;
+  margin-bottom:-1px;
+  transition:all .2s;
+  white-space:nowrap;
+}
+.tab:hover{color:rgba(255,255,255,.7)}
+.tab.active{color:var(--accent-lt);border-color:var(--accent)}
+
+/* ══ BODY LAYOUT ═════════════════════════════════════════════ */
+.page{max-width:1320px;margin:0 auto;padding:30px 28px}
+.panel{display:none}
+.panel.active{display:block;animation:rise .28s ease}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.pg-title{
+  font-family:'Playfair Display',serif;
+  font-size:24px;font-weight:700;
+  color:var(--text);margin-bottom:4px;
+}
+.pg-sub{font-size:13px;color:var(--text-lt);margin-bottom:24px}
+
+/* ══ STAT CARDS ══════════════════════════════════════════════ */
+.stats-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+  gap:14px;margin-bottom:26px;
+}
+.sc{
+  background:var(--card-bg);
+  border:1px solid var(--border);
+  border-radius:var(--r-lg);
+  padding:20px 22px 18px;
+  position:relative;overflow:hidden;
+  box-shadow:var(--shadow-xs);
+  transition:transform .2s,box-shadow .2s;
+}
+.sc:hover{transform:translateY(-2px);box-shadow:var(--shadow-sm)}
+.sc::before{
+  content:'';position:absolute;
+  top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--accent),var(--accent-lt));
+}
+.sc.c-active::before{background:linear-gradient(90deg,#B45309,#F59E0B)}
+.sc.c-offer::before{background:linear-gradient(90deg,#065F46,#10B981)}
+.sc.c-hired::before{background:linear-gradient(90deg,#1E3A8A,#60A5FA)}
+.sc.c-reject::before{background:linear-gradient(90deg,#7F1D1D,#EF4444)}
+.sc-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--text-faint);margin-bottom:8px}
+.sc-num{
+  font-family:'Playfair Display',serif;
+  font-size:38px;font-weight:700;color:var(--text);line-height:1;
+}
+.sc-hint{font-size:11px;color:var(--text-lt);margin-top:5px}
+
+/* ══ PIPELINE ════════════════════════════════════════════════ */
+.pipeline-wrap{
+  background:var(--card-bg);border:1px solid var(--border);
+  border-radius:var(--r-lg);padding:22px 24px;
+  box-shadow:var(--shadow-xs);margin-bottom:22px;
+}
+.pl-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-lt);margin-bottom:14px}
+.pl-track{display:flex;gap:5px;height:42px;border-radius:var(--r);overflow:hidden}
+.pl-seg{
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:#fff;
+  border-radius:6px;transition:flex .55s cubic-bezier(.4,0,.2,1);
+  cursor:default;white-space:nowrap;overflow:hidden;min-width:4px;
+}
+.pl-legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:13px}
+.pl-li{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-lt)}
+.pl-dot{width:9px;height:9px;border-radius:50%}
+
+/* ══ RECENT ══════════════════════════════════════════════════ */
+.recent-row{
+  display:flex;align-items:center;gap:12px;
+  padding:10px 0;border-bottom:1px solid var(--border-lt);
+  font-size:13px;
+}
+.recent-row:last-child{border:none}
+
+/* ══ TOOLBAR ══════════════════════════════════════════════════ */
+.toolbar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.srch{flex:1;min-width:200px;position:relative}
+.srch svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);pointer-events:none}
+.srch input{
+  width:100%;padding:9px 13px 9px 35px;
+  border:1px solid var(--border);border-radius:var(--r);
+  background:var(--card-bg);font-family:'Nunito',sans-serif;font-size:13px;color:var(--text);
+  outline:none;transition:border .2s,box-shadow .2s;
+}
+.srch input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(200,118,26,.1)}
+.fsel{
+  padding:9px 13px;border:1px solid var(--border);border-radius:var(--r);
+  background:var(--card-bg);font-family:'Nunito',sans-serif;font-size:13px;color:var(--text);
+  outline:none;cursor:pointer;
+}
+.fsel:focus{border-color:var(--accent)}
+
+/* ══ BUTTONS ══════════════════════════════════════════════════ */
+.btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:9px 18px;border:none;border-radius:var(--r);
+  font-family:'Nunito',sans-serif;font-size:13px;font-weight:600;
+  cursor:pointer;transition:all .18s;
+}
+.btn-dark{
+  background:var(--hdr-bg);
+  background-image:linear-gradient(135deg,var(--hdr-bg),#2E1208);
+  color:#fff;
+}
+.btn-dark:hover{background-image:linear-gradient(135deg,#2E1208,#3D1A0A)}
+.btn-amber{background:var(--accent);color:#fff;font-weight:700}
+.btn-amber:hover{background:var(--accent-dk)}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text-mid)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-danger:hover{background:#6B1209}
+.btn-success{background:var(--success);color:#fff}
+.btn-sm{padding:5px 12px;font-size:12px}
+
+/* ══ TABLE ════════════════════════════════════════════════════ */
+.tbl-shell{
+  background:var(--card-bg);border:1px solid var(--border);
+  border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow-xs);
+}
+table{width:100%;border-collapse:collapse}
+thead{background:var(--cream-warm)}
+th{
+  padding:11px 15px;text-align:left;
+  font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--text-lt);white-space:nowrap;
+}
+td{
+  padding:12px 15px;font-size:13px;
+  border-top:1px solid var(--border-lt);
+  vertical-align:middle;
+}
+tbody tr{transition:background .12s}
+tbody tr:hover td{background:#fdf5ea}
+.empty-td{text-align:center;padding:48px!important;color:var(--text-lt);font-style:italic}
+.row-hint{font-size:11px;color:var(--text-faint);margin-top:8px;padding-left:2px}
+
+/* ══ EDITABLE CELLS (admin only) ═════════════════════════════ */
+td.editable{cursor:pointer;position:relative}
+td.editable:hover{background:#fff8ee!important}
+td.editable:hover::after{
+  content:'✎';position:absolute;right:5px;top:50%;transform:translateY(-50%);
+  font-size:10px;color:var(--accent);opacity:.8;
+}
+.ci{
+  width:100%;padding:4px 8px;
+  border:1.5px solid var(--accent);border-radius:5px;
+  background:var(--cream);font-family:'Nunito',sans-serif;font-size:13px;color:var(--text);
+  outline:none;box-shadow:0 0 0 3px rgba(200,118,26,.1);
+}
+.csel{
+  width:100%;padding:4px 6px;
+  border:1.5px solid var(--accent);border-radius:5px;
+  background:var(--cream);font-family:'Nunito',sans-serif;font-size:13px;color:var(--text);
+  outline:none;
+}
+
+/* ══ BADGES ══════════════════════════════════════════════════ */
+.badge{
+  display:inline-flex;align-items:center;
+  padding:3px 10px;border-radius:20px;
+  font-size:11px;font-weight:700;letter-spacing:.02em;white-space:nowrap;
+}
+.b-sc{background:#EEF2FF;color:#3730A3}
+.b-i1{background:#FFFBEB;color:#92400E}
+.b-i2{background:#E0F2FE;color:#075985}
+.b-of{background:#ECFDF5;color:#065F46}
+.b-hi{background:#D1FAE5;color:#064E3B}
+.b-re{background:#FEF2F2;color:#991B1B}
+
+/* ══ ADD FORM ════════════════════════════════════════════════ */
+.form-card{
+  background:var(--card-bg);border:1px solid var(--border);
+  border-radius:var(--r-lg);padding:34px;max-width:820px;
+  box-shadow:var(--shadow-xs);
+}
+.form-sec{
+  font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;
+  color:var(--text-faint);
+  border-bottom:1px solid var(--border-lt);
+  padding-bottom:8px;margin:26px 0 16px;
+}
+.form-sec:first-child{margin-top:0}
+.fg-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.fg{display:flex;flex-direction:column;gap:5px}
+.fg.full{grid-column:1/-1}
+.fg label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-lt)}
+.fg input,.fg select,.fg textarea{
+  padding:10px 13px;
+  border:1px solid var(--border);border-radius:var(--r);
+  background:var(--cream-warm);
+  font-family:'Nunito',sans-serif;font-size:13px;color:var(--text);
+  outline:none;transition:all .2s;width:100%;
+}
+.fg input:focus,.fg select:focus,.fg textarea:focus{
+  border-color:var(--accent);background:#fff;
+  box-shadow:0 0 0 3px rgba(200,118,26,.1);
+}
+.fg textarea{resize:vertical;min-height:86px}
+.form-foot{
+  margin-top:26px;padding-top:20px;
+  border-top:1px solid var(--border-lt);
+  display:flex;gap:12px;align-items:center;flex-wrap:wrap;
+}
+.form-msg{font-size:13px;font-weight:600}
+.form-msg.ok{color:var(--success)}.form-msg.err{color:var(--danger)}
+
+/* ══ MODAL ════════════════════════════════════════════════════ */
+.overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(10,3,0,.6);backdrop-filter:blur(4px);
+  z-index:800;align-items:center;justify-content:center;
+}
+.overlay.open{display:flex;animation:fo .2s ease}
+@keyframes fo{from{opacity:0}to{opacity:1}}
+.modal{
+  background:var(--card-bg);border:1px solid var(--border);
+  border-radius:var(--r-lg);padding:34px;
+  width:min(660px,95vw);max-height:90vh;overflow-y:auto;
+  box-shadow:var(--shadow-lg);animation:rise .25s ease;
+}
+.modal-sm{max-width:420px}
+.mh{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}
+.mttl{
+  font-family:'Playfair Display',serif;
+  font-size:21px;font-weight:700;color:var(--text);
+}
+.mclose{
+  background:none;border:none;font-size:24px;
+  color:var(--text-lt);cursor:pointer;line-height:1;transition:color .2s;
+}
+.mclose:hover{color:var(--text)}
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:18px}
+.df{display:flex;flex-direction:column;gap:3px}
+.df.full{grid-column:1/-1}
+.df-l{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-faint)}
+.df-v{font-size:14px;color:var(--text)}
+.cmt-box{
+  background:var(--cream-warm);border:1px solid var(--border-lt);
+  border-radius:var(--r);padding:13px;font-size:13px;color:var(--text);
+  min-height:60px;white-space:pre-wrap;line-height:1.6;margin-top:4px;
+}
+.divider{border:none;border-top:1px solid var(--border);margin:18px 0}
+
+/* ══ PASSWORD LOCK SCREEN ════════════════════════════════════ */
+.lock-overlay{
+  display:none;position:fixed;inset:0;
+  background:var(--locked-bg);
+  z-index:900;
+  align-items:center;justify-content:center;
+  flex-direction:column;gap:0;
+}
+.lock-overlay.open{display:flex;animation:fo .3s ease}
+.lock-card{
+  background:#1A0800;
+  border:1px solid #3D1F08;
+  border-radius:var(--r-lg);
+  padding:44px 48px;
+  width:min(400px,90vw);
+  text-align:center;
+  box-shadow:0 0 80px rgba(200,118,26,.15);
+}
+.lock-icon{font-size:36px;margin-bottom:16px}
+.lock-title{
+  font-family:'Playfair Display',serif;
+  font-size:22px;font-weight:700;color:#fff;
+  margin-bottom:6px;
+}
+.lock-sub{font-size:13px;color:rgba(255,255,255,.4);margin-bottom:28px}
+.lock-input{
+  width:100%;padding:13px 16px;
+  background:#0D0400;
+  border:1px solid #3D1F08;
+  border-radius:var(--r);
+  font-family:'Nunito',sans-serif;font-size:15px;
+  color:#fff;letter-spacing:.12em;text-align:center;
+  outline:none;transition:border .2s,box-shadow .2s;
+  margin-bottom:14px;
+}
+.lock-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(200,118,26,.2)}
+.lock-input.shake{animation:shake .4s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.lock-err{
+  font-size:12px;color:#EF4444;
+  margin-bottom:12px;min-height:16px;font-weight:600;
+}
+.lock-actions{display:flex;gap:10px;justify-content:center}
+.lock-unlock-btn{
+  flex:1;padding:12px 0;
+  background:var(--accent);
+  border:none;border-radius:var(--r);
+  font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;
+  color:#fff;cursor:pointer;transition:background .2s;
+}
+.lock-unlock-btn:hover{background:var(--accent-dk)}
+.lock-cancel-btn{
+  padding:12px 20px;
+  background:transparent;border:1px solid #3D1F08;
+  border-radius:var(--r);
+  font-family:'Nunito',sans-serif;font-size:14px;font-weight:600;
+  color:rgba(255,255,255,.4);cursor:pointer;transition:all .2s;
+}
+.lock-cancel-btn:hover{border-color:#6D3510;color:rgba(255,255,255,.7)}
+
+/* ══ ADMIN PANEL FULL EDIT FORM ══════════════════════════════ */
+.admin-bar{
+  display:none;
+  background:linear-gradient(90deg,#1C0A00,#2E1208);
+  border-bottom:2px solid var(--accent);
+  padding:10px 28px;
+  align-items:center;gap:14px;
+}
+.admin-bar.visible{display:flex}
+.admin-bar-lbl{
+  font-size:11px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.1em;color:var(--accent-lt);
+}
+.admin-hint{font-size:12px;color:rgba(224,152,64,.6)}
+.save-all-btn{
+  margin-left:auto;padding:7px 18px;
+  background:var(--accent);border:none;border-radius:var(--r);
+  font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;
+  color:#fff;cursor:pointer;transition:background .2s;
+}
+.save-all-btn:hover{background:var(--accent-dk)}
+.exit-admin-bar{
+  padding:7px 16px;
+  background:transparent;border:1px solid rgba(200,118,26,.35);
+  border-radius:var(--r);
+  font-family:'Nunito',sans-serif;font-size:12px;font-weight:600;
+  color:rgba(255,255,255,.5);cursor:pointer;transition:all .2s;
+}
+.exit-admin-bar:hover{border-color:rgba(200,118,26,.7);color:rgba(255,255,255,.8)}
+
+/* ══ TOAST ════════════════════════════════════════════════════ */
+#toast{
+  position:fixed;bottom:22px;right:22px;
+  background:var(--hdr-bg);color:#fff;
+  padding:12px 20px;border-radius:var(--r);
+  font-size:13px;font-weight:600;
+  border-left:3px solid var(--accent);
+  box-shadow:var(--shadow-lg);
+  opacity:0;pointer-events:none;transition:opacity .3s;
+  z-index:9999;max-width:320px;
+}
+#toast.show{opacity:1}
+#toast.ok{border-color:#4CAF50}
+#toast.er{border-color:#EF4444}
+
+.spin{
+  display:inline-block;width:14px;height:14px;
+  border:2px solid var(--cream-mid);border-top-color:var(--accent);
+  border-radius:50%;animation:spinning .7s linear infinite;vertical-align:middle;
+}
+@keyframes spinning{to{transform:rotate(360deg)}}
+
+/* ══ PENDING CHANGE INDICATOR ════════════════════════════════ */
+.pending-dot::after{
+  content:'●';color:var(--accent-lt);font-size:8px;
+  vertical-align:super;margin-left:2px;
+}
+
+@media(max-width:660px){
+  .site-header,.tab-bar,.page,.admin-bar{padding-left:16px;padding-right:16px}
+  .fg-grid,.dgrid{grid-template-columns:1fr}
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .form-card{padding:20px}
+  .admin-hint{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ HEADER ════════════════════════════════════════════════ -->
+<header class="site-header">
+  <div class="brand-group">
+    <div class="brand-icon">🍦</div>
+    <div class="brand-text">
+      <div class="brand-name">B'CREAMY <span>HR</span></div>
+      <div class="brand-tag">Iconic Thickshakes · Since 1893</div>
+    </div>
+  </div>
+  <div class="header-nav">
+    <div style="display:flex;align-items:center;gap:7px;padding:6px 12px;border-radius:20px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06)">
+      <div class="hdr-dot"></div>
+      <span style="font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:rgba(255,255,255,.35)">Live</span>
+    </div>
+    <button class="hdr-btn admin-btn" id="adminBtn" onclick="openLock()">
+      🔒 Admin
+    </button>
+  </div>
+</header>
+
+<!-- ══ ADMIN BAR (shown when unlocked) ══════════════════════ -->
+<div class="admin-bar" id="adminBar">
+  <span class="admin-bar-lbl">⚙ Admin Mode</span>
+  <span class="admin-hint">Click any highlighted cell to edit · Use "Edit All" for full record control</span>
+  <button class="save-all-btn" onclick="saveAllPending()">💾 Save All Changes</button>
+  <button class="exit-admin-bar" onclick="lockAdmin()">Exit Admin</button>
+</div>
+
+<!-- ══ TABS ══════════════════════════════════════════════════ -->
+<nav class="tab-bar">
+  <button class="tab active" onclick="switchTab('dashboard',this)">Dashboard</button>
+  <button class="tab" onclick="switchTab('candidates',this)">Candidates</button>
+  <button class="tab" onclick="switchTab('add',this)">Add Candidate</button>
+</nav>
+
+<!-- ══ MAIN ══════════════════════════════════════════════════ -->
+<div class="page">
+
+  <!-- DASHBOARD -->
+  <div class="panel active" id="panel-dashboard">
+    <div class="pg-title">Recruitment Overview</div>
+    <div class="pg-sub">Live pipeline — refreshes each visit</div>
+
+    <div class="stats-grid">
+      <div class="sc"><div class="sc-lbl">Total</div><div class="sc-num" id="sT">—</div><div class="sc-hint">All applications</div></div>
+      <div class="sc c-active"><div class="sc-lbl">In Progress</div><div class="sc-num" id="sA">—</div><div class="sc-hint">Screening + Interviews</div></div>
+      <div class="sc c-offer"><div class="sc-lbl">Offers Made</div><div class="sc-num" id="sO">—</div><div class="sc-hint">Awaiting response</div></div>
+      <div class="sc c-hired"><div class="sc-lbl">Hired</div><div class="sc-num" id="sH">—</div><div class="sc-hint">Positions filled</div></div>
+      <div class="sc c-reject"><div class="sc-lbl">Rejected</div><div class="sc-num" id="sR">—</div><div class="sc-hint">This cycle</div></div>
+    </div>
+
+    <div class="pipeline-wrap">
+      <div class="pl-lbl">Candidate Pipeline</div>
+      <div class="pl-track" id="plTrack"><div class="pl-seg" style="background:var(--text-lt);flex:1">Loading…</div></div>
+      <div class="pl-legend" id="plLeg"></div>
+    </div>
+
+    <div class="pipeline-wrap" style="margin-top:0">
+      <div class="pl-lbl">Recently Added</div>
+      <div id="recentList"><span style="color:var(--text-lt);font-style:italic;font-size:13px">—</span></div>
+    </div>
+  </div>
+
+  <!-- CANDIDATES -->
+  <div class="panel" id="panel-candidates">
+    <div class="toolbar">
+      <div class="srch">
+        <svg width="15" height="15" fill="none" stroke="var(--text-faint)" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input type="text" id="searchQ" placeholder="Search name, position, recruiter…" oninput="doFilter()"/>
+      </div>
+      <select class="fsel" id="fStage" onchange="doFilter()">
+        <option value="">All Stages</option>
+        <option>Screening</option><option>Interview 1</option><option>Interview 2</option>
+        <option>Offered</option><option>Hired</option><option>Rejected</option>
+      </select>
+      <select class="fsel" id="fPos" onchange="doFilter()">
+        <option value="">All Positions</option>
+      </select>
+      <button class="btn btn-ghost btn-sm" onclick="loadData()">↻ Refresh</button>
+      <button class="btn btn-dark btn-sm" onclick="switchTab('add',document.querySelectorAll('.tab')[2])">+ Add</button>
+    </div>
+
+    <div class="tbl-shell">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>Candidate</th><th>Position</th><th>Source</th>
+            <th>Stage</th><th>Recruiter</th><th>Applied</th><th>Comments</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tBody">
+          <tr><td colspan="9" class="empty-td"><span class="spin"></span> Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="row-hint" id="rowHint"></div>
+  </div>
+
+  <!-- ADD CANDIDATE -->
+  <div class="panel" id="panel-add">
+    <div class="pg-title">Add New Candidate</div>
+    <div class="pg-sub">Data saves directly to Google Sheets</div>
+    <div class="form-card">
+      <div class="form-sec">Personal Information</div>
+      <div class="fg-grid">
+        <div class="fg"><label>Full Name *</label><input type="text" id="aN" placeholder="e.g. Priya Sharma"/></div>
+        <div class="fg"><label>Email</label><input type="email" id="aE" placeholder="priya@example.com"/></div>
+        <div class="fg"><label>Phone</label><input type="text" id="aPh" placeholder="+91 98765 43210"/></div>
+        <div class="fg"><label>Application Date</label><input type="date" id="aDt"/></div>
+      </div>
+      <div class="form-sec">Role & Pipeline</div>
+      <div class="fg-grid">
+        <div class="fg"><label>Position Applied For *</label><input type="text" id="aPo" placeholder="e.g. Production Manager"/></div>
+        <div class="fg"><label>Source *</label>
+          <select id="aSr">
+            <option>LinkedIn</option><option>Naukri</option><option>Referral</option>
+            <option>Walk-in</option><option>Job Fair</option><option>Indeed</option><option>Other</option>
+          </select>
+        </div>
+        <div class="fg"><label>Current Stage *</label>
+          <select id="aSt">
+            <option>Screening</option><option>Interview 1</option><option>Interview 2</option>
+            <option>Offered</option><option>Hired</option><option>Rejected</option>
+          </select>
+        </div>
+        <div class="fg"><label>Assigned Recruiter *</label><input type="text" id="aRe" placeholder="Your name"/></div>
+      </div>
+      <div class="form-sec">Feedback</div>
+      <div class="fg-grid">
+        <div class="fg full"><label>Comments / Interviewer Notes</label>
+          <textarea id="aCo" placeholder="Feedback, observations, next steps…"></textarea>
+        </div>
+      </div>
+      <div class="form-foot">
+        <button class="btn btn-dark" id="submitBtn" onclick="submitCandidate()">Save Candidate</button>
+        <button class="btn btn-ghost" onclick="clearAdd()">Clear</button>
+        <span class="form-msg" id="formMsg"></span>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<!-- ══ PASSWORD LOCK SCREEN ════════════════════════════════════ -->
+<div class="lock-overlay" id="lockOverlay">
+  <div class="lock-card">
+    <div class="lock-icon">🔐</div>
+    <div class="lock-title">Admin Access</div>
+    <div class="lock-sub">Enter the admin password to continue.</div>
+    <input type="password" class="lock-input" id="lockInput"
+      placeholder="Password" autocomplete="off"
+      onkeydown="if(event.key==='Enter')tryUnlock()"/>
+    <div class="lock-err" id="lockErr"></div>
+    <div class="lock-actions">
+      <button class="lock-unlock-btn" onclick="tryUnlock()">Unlock</button>
+      <button class="lock-cancel-btn" onclick="closeLock()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DETAIL MODAL ════════════════════════════════════════════ -->
+<div class="overlay" id="detailOv" onclick="if(event.target===this)closeDetail()">
+  <div class="modal">
+    <div class="mh">
+      <div class="mttl" id="dName">Candidate</div>
+      <button class="mclose" onclick="closeDetail()">×</button>
+    </div>
+    <div class="dgrid" id="dGrid"></div>
+    <hr class="divider"/>
+    <div class="df-l">Comments / Feedback</div>
+    <div class="cmt-box" id="dCmt">—</div>
+    <div style="margin-top:18px;display:flex;gap:10px" id="dActs"></div>
+  </div>
+</div>
+
+<!-- ══ QUICK UPDATE MODAL ══════════════════════════════════════ -->
+<div class="overlay" id="editOv" onclick="if(event.target===this)closeEdit()">
+  <div class="modal modal-sm">
+    <div class="mh">
+      <div class="mttl">Update Candidate</div>
+      <button class="mclose" onclick="closeEdit()">×</button>
+    </div>
+    <div class="fg" style="margin-bottom:14px">
+      <label>New Stage</label>
+      <select id="eStage" style="padding:10px 13px;border:1px solid var(--border);border-radius:var(--r);background:var(--cream-warm);font-family:'Nunito',sans-serif;font-size:13px;outline:none;width:100%">
+        <option>Screening</option><option>Interview 1</option><option>Interview 2</option>
+        <option>Offered</option><option>Hired</option><option>Rejected</option>
+      </select>
+    </div>
+    <div class="fg" style="margin-bottom:14px">
+      <label>Recruiter</label>
+      <input type="text" id="eRec" style="padding:10px 13px;border:1px solid var(--border);border-radius:var(--r);background:var(--cream-warm);font-family:'Nunito',sans-serif;font-size:13px;outline:none;width:100%"/>
+    </div>
+    <div class="fg">
+      <label>Append Comment</label>
+      <textarea id="eCmt" style="padding:10px 13px;border:1px solid var(--border);border-radius:var(--r);background:var(--cream-warm);font-family:'Nunito',sans-serif;font-size:13px;outline:none;min-height:72px;resize:vertical;width:100%" placeholder="Optional note…"></textarea>
+    </div>
+    <div style="margin-top:18px;display:flex;gap:10px">
+      <button class="btn btn-dark" onclick="saveEdit()">Save Changes</button>
+      <button class="btn btn-ghost" onclick="closeEdit()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ADMIN FULL-EDIT MODAL ══════════════════════════════════ -->
+<div class="overlay" id="adminOv" onclick="if(event.target===this)closeAdminEdit()">
+  <div class="modal">
+    <div class="mh">
+      <div class="mttl">✎ Edit Full Record</div>
+      <button class="mclose" onclick="closeAdminEdit()">×</button>
+    </div>
+
+    <div style="background:var(--cream-warm);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;margin-bottom:20px;font-size:12px;color:var(--text-lt)">
+      ⚙ Admin — all fields are editable. Changes will sync to Google Sheets.
+    </div>
+
+    <div class="fg-grid" id="adminGrid"></div>
+
+    <div style="margin-top:22px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-amber" onclick="saveAdminEdit()">✓ Save All Fields</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteRecord()">✕ Delete Record</button>
+      <button class="btn btn-ghost" style="margin-left:auto" onclick="closeAdminEdit()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ══ CONFIG ═══════════════════════════════════════════════════
+const SCRIPT_URL = 'https://script.google.com/a/macros/bcreamy.com/s/AKfycbyxFWIknHTXw-K3XX6lHzr9PHypqxDXtcHn7K0Sp4bNpNb2YqURhkvERxAfTd4ocDf6Tg/exec';
+const ADMIN_PASS = 'bcreamy2026';
+
+// ══ STATE ════════════════════════════════════════════════════
+let candidates = [];
+let filtered   = [];
+let editIdx    = null;
+let adminIdx   = null;
+let adminMode  = false;
+let pending    = {}; // { rowId: { field: val } }
+
+// ══ TABS ══════════════════════════════════════════════════════
+function switchTab(n, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + n).classList.add('active');
+  btn.classList.add('active');
+  if (n === 'dashboard')  renderDash();
+  if (n === 'candidates') loadData();
+}
+
+// ══ LOCK / UNLOCK ══════════════════════════════════════════════
+function openLock() {
+  if (adminMode) { lockAdmin(); return; }
+  document.getElementById('lockInput').value = '';
+  document.getElementById('lockErr').textContent = '';
+  document.getElementById('lockOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('lockInput').focus(), 80);
+}
+
+function closeLock() {
+  document.getElementById('lockOverlay').classList.remove('open');
+}
+
+function tryUnlock() {
+  const pw = document.getElementById('lockInput').value;
+  if (pw === ADMIN_PASS) {
+    closeLock();
+    adminMode = true;
+    document.getElementById('adminBtn').textContent = '🔓 Admin';
+    document.getElementById('adminBtn').classList.add('unlocked');
+    document.getElementById('adminBar').classList.add('visible');
+    renderTable(filtered.length ? filtered : candidates);
+    showToast('🔓 Admin mode unlocked', 'ok');
+  } else {
+    const inp = document.getElementById('lockInput');
+    document.getElementById('lockErr').textContent = 'Incorrect password. Try again.';
+    inp.classList.add('shake');
+    inp.value = '';
+    setTimeout(() => inp.classList.remove('shake'), 420);
+    inp.focus();
+  }
+}
+
+function lockAdmin() {
+  adminMode = false;
+  pending = {};
+  document.getElementById('adminBtn').textContent = '🔒 Admin';
+  document.getElementById('adminBtn').classList.remove('unlocked');
+  document.getElementById('adminBar').classList.remove('visible');
+  renderTable(filtered.length ? filtered : candidates);
+  showToast('Admin mode locked', '');
+}
+
+// ══ DATA ══════════════════════════════════════════════════════
+async function loadData() {
+  const tb = document.getElementById('tBody');
+  tb.innerHTML = '<tr><td colspan="9" class="empty-td"><span class="spin"></span> Fetching…</td></tr>';
+  try {
+    const r = await fetch(`${SCRIPT_URL}?action=getCandidates`);
+    const d = await r.json();
+    candidates = d.candidates || [];
+    filtered   = [...candidates];
+    buildPosFilter();
+    renderTable(candidates);
+    renderDash();
+  } catch {
+    tb.innerHTML = '<tr><td colspan="9" class="empty-td">⚠ Cannot reach backend. Check SCRIPT_URL.</td></tr>';
+  }
+}
+
+// ══ TABLE ══════════════════════════════════════════════════════
+function renderTable(rows) {
+  const tb = document.getElementById('tBody');
+  document.getElementById('rowHint').textContent =
+    `Showing ${rows.length} candidate${rows.length !== 1 ? 's' : ''}`;
+
+  if (!rows.length) {
+    tb.innerHTML = '<tr><td colspan="9" class="empty-td">No candidates match the filters.</td></tr>';
+    return;
+  }
+
+  tb.innerHTML = rows.map((c, i) => {
+    const ri  = candidates.indexOf(c);
+    const ec  = adminMode ? ' editable' : '';
+    const hp  = pending[c.rowId] ? ' pending-dot' : '';
+
+    return `<tr>
+      <td style="color:var(--text-faint);font-size:11px">${i+1}</td>
+      <td class="${ec}${hp}" ${adminMode ? `onclick="ie(event,${ri},'name')"` : ''}>
+        <div style="font-weight:600">${x(c.name)}</div>
+        <div style="font-size:11px;color:var(--text-lt)">${x(c.email||'')}</div>
+      </td>
+      <td class="${ec}" ${adminMode ? `onclick="ie(event,${ri},'position')"` : ''}>${x(c.position)}</td>
+      <td style="font-size:12px;color:var(--text-lt)" class="${ec}" ${adminMode ? `onclick="ie(event,${ri},'source')"` : ''}>${x(c.source)}</td>
+      <td class="${ec}" ${adminMode ? `onclick="iesel(event,${ri},'stage')"` : ''}>
+        <span class="badge ${bc(c.stage)}">${x(c.stage)}</span>
+      </td>
+      <td class="${ec}" ${adminMode ? `onclick="ie(event,${ri},'recruiter')"` : ''}>${x(c.recruiter)}</td>
+      <td style="font-size:12px;color:var(--text-lt)">${x(c.date||'')}</td>
+      <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text-lt)" title="${x(c.comments||'')}">${x(c.comments||'—')}</td>
+      <td>
+        <button class="btn btn-ghost btn-sm" onclick="openDetail(${ri})">View</button>
+        ${adminMode
+          ? `<button class="btn btn-amber btn-sm" style="margin-left:4px" onclick="openAdminEdit(${ri})">✎ Edit All</button>`
+          : `<button class="btn btn-dark btn-sm" style="margin-left:4px" onclick="openEdit(${ri})">Update</button>`}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ══ INLINE EDIT ════════════════════════════════════════════════
+function ie(e, ri, field) {
+  if (!adminMode) return;
+  const td = e.currentTarget;
+  if (td.querySelector('.ci')) return;
+  const cur = field === 'name' ? candidates[ri].name : candidates[ri][field];
+  const orig = td.innerHTML;
+  td.innerHTML = `<input class="ci" value="${x(cur||'')}" />`;
+  const inp = td.querySelector('input');
+  inp.focus(); inp.select();
+  inp.addEventListener('blur', () => commitIE(td, ri, field, inp.value));
+  inp.addEventListener('keydown', ev => {
+    if (ev.key === 'Enter') inp.blur();
+    if (ev.key === 'Escape') { td.innerHTML = orig; }
+  });
+}
+
+function iesel(e, ri, field) {
+  if (!adminMode) return;
+  const td = e.currentTarget;
+  if (td.querySelector('.csel')) return;
+  const stages = ['Screening','Interview 1','Interview 2','Offered','Hired','Rejected'];
+  const opts = stages.map(s => `<option${s===candidates[ri].stage?' selected':''}>${s}</option>`).join('');
+  td.innerHTML = `<select class="csel">${opts}</select>`;
+  const sel = td.querySelector('select');
+  sel.focus();
+  sel.addEventListener('change', () => { commitIE(td, ri, field, sel.value); });
+  sel.addEventListener('keydown', ev => { if (ev.key === 'Escape') renderTable(filtered.length?filtered:candidates); });
+  sel.addEventListener('blur', () => setTimeout(() => { if(td.querySelector('.csel')) renderTable(filtered.length?filtered:candidates); }, 220));
+}
+
+function commitIE(td, ri, field, val) {
+  const c = candidates[ri];
+  if (val !== c[field]) {
+    c[field] = val;
+    if (!pending[c.rowId]) pending[c.rowId] = {};
+    pending[c.rowId][field] = val;
+    showToast(`"${field}" changed — click Save All`, '');
+  }
+  renderTable(filtered.length ? filtered : candidates);
+  renderDash();
+}
+
+async function saveAllPending() {
+  const ids = Object.keys(pending);
+  if (!ids.length) { showToast('No pending changes', ''); return; }
+  for (const rowId of ids) {
+    const c = candidates.find(x => x.rowId === rowId);
+    if (!c) continue;
+    try {
+      await fetch(SCRIPT_URL, {
+        method:'POST', mode:'no-cors',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ action:'updateCandidate', rowId, ...pending[rowId] }),
+      });
+    } catch {}
+  }
+  pending = {};
+  renderTable(filtered.length ? filtered : candidates);
+  showToast(`✓ ${ids.length} record${ids.length>1?'s':''} saved`, 'ok');
+}
+
+// ══ ADMIN FULL EDIT ════════════════════════════════════════════
+function openAdminEdit(ri) {
+  adminIdx = ri;
+  const c = candidates[ri];
+  const stages  = ['Screening','Interview 1','Interview 2','Offered','Hired','Rejected'];
+  const sources = ['LinkedIn','Naukri','Referral','Walk-in','Job Fair','Indeed','Other'];
+  const inp = (id, lbl, val, type='text') =>
+    `<div class="fg"><label>${lbl}</label><input type="${type}" id="ae_${id}" value="${x(val||'')}" style="padding:10px 13px;border:1px solid var(--border);border-radius:var(--r);background:var(--cream-warm);font-family:'Nunito',sans-serif;font-size:13px;outline:none;width:100%"/></div>`;
+  const sel = (id, lbl, opts, cur) =>
+    `<div class="fg"><label>${lbl}</label><select id="ae_${id}" style="padding:10px 13px;border:1px solid var(--border);border-radius:var(--r);background:var(--cream-warm);font-family:'Nunito',sans-serif;font-size:13px;outline:none;width:100%">${opts.map(o=>`<option${o===cur?' selected':''}>${o}</option>`).join('')}</select></div>`;
+
+  document.getElementById('adminGrid').innerHTML = [
+    inp('name','Full Name',c.name),
+    inp('email','Email',c.email,'email'),
+    inp('phone','Phone',c.phone),
+    inp('position','Position',c.position),
+    inp('recruiter','Recruiter',c.recruiter),
+    inp('date','Applied Date',c.date,'date'),
+    sel('stage','Stage',stages,c.stage),
+    sel('source','Source',sources,c.source),
+    `<div class="fg full"><label>Comments</label><textarea id="ae_comments" style="padding:10px 13px;border:1px solid var(--border);border-radius:var(--r);background:var(--cream-warm);font-family:'Nunito',sans-serif;font-size:13px;outline:none;min-height:86px;resize:vertical;width:100%">${x(c.comments||'')}</textarea></div>`,
+  ].join('');
+  document.getElementById('adminOv').classList.add('open');
+}
+
+async function saveAdminEdit() {
+  const c = candidates[adminIdx];
+  const fields = ['name','email','phone','position','recruiter','date','stage','source'];
+  const upd = {};
+  fields.forEach(f => { upd[f] = document.getElementById('ae_'+f)?.value || ''; });
+  upd.comments = document.getElementById('ae_comments')?.value || '';
+  Object.assign(c, upd);
+  try {
+    await fetch(SCRIPT_URL, {
+      method:'POST', mode:'no-cors',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ action:'updateCandidate', rowId: c.rowId, ...upd }),
+    });
+    delete pending[c.rowId];
+    renderTable(filtered.length ? filtered : candidates);
+    renderDash();
+    closeAdminEdit();
+    showToast('✓ Record fully updated', 'ok');
+  } catch { showToast('Error saving', 'er'); }
+}
+
+async function deleteRecord() {
+  const c = candidates[adminIdx];
+  if (!confirm(`Permanently delete "${c.name}"? This cannot be undone.`)) return;
+  try {
+    await fetch(SCRIPT_URL, {
+      method:'POST', mode:'no-cors',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ action:'deleteCandidate', rowId: c.rowId }),
+    });
+    candidates.splice(adminIdx, 1);
+    filtered = [...candidates];
+    renderTable(candidates);
+    renderDash();
+    closeAdminEdit();
+    showToast('Record deleted', 'er');
+  } catch { showToast('Error deleting', 'er'); }
+}
+
+function closeAdminEdit() { document.getElementById('adminOv').classList.remove('open'); }
+
+// ══ DETAIL MODAL ══════════════════════════════════════════════
+function openDetail(ri) {
+  const c = candidates[ri];
+  document.getElementById('dName').textContent = c.name;
+  document.getElementById('dCmt').textContent  = c.comments || 'No comments yet.';
+  document.getElementById('dGrid').innerHTML = [
+    ['Position', c.position],
+    ['Stage',    `<span class="badge ${bc(c.stage)}">${x(c.stage)}</span>`],
+    ['Email',    c.email||'—'],
+    ['Phone',    c.phone||'—'],
+    ['Source',   c.source],
+    ['Recruiter',c.recruiter],
+    ['Applied',  c.date||'—'],
+    ['Record ID',c.rowId||'—'],
+  ].map(([l,v]) => `<div class="df"><div class="df-l">${l}</div><div class="df-v">${v}</div></div>`).join('');
+  document.getElementById('dActs').innerHTML = `
+    <button class="btn btn-dark btn-sm" onclick="closeDetail();openEdit(${ri})">Update Stage</button>
+    ${adminMode ? `<button class="btn btn-amber btn-sm" onclick="closeDetail();openAdminEdit(${ri})">✎ Edit All Fields</button>` : ''}
+  `;
+  document.getElementById('detailOv').classList.add('open');
+}
+function closeDetail() { document.getElementById('detailOv').classList.remove('open'); }
+
+// ══ QUICK EDIT ══════════════════════════════════════════════════
+function openEdit(ri) {
+  editIdx = ri;
+  const c = candidates[ri];
+  document.getElementById('eStage').value = c.stage;
+  document.getElementById('eRec').value   = c.recruiter;
+  document.getElementById('eCmt').value   = '';
+  document.getElementById('editOv').classList.add('open');
+}
+function closeEdit() { document.getElementById('editOv').classList.remove('open'); }
+async function saveEdit() {
+  const c   = candidates[editIdx];
+  const ns  = document.getElementById('eStage').value;
+  const nr  = document.getElementById('eRec').value.trim();
+  const nc  = document.getElementById('eCmt').value.trim();
+  const cmt = [c.comments, nc].filter(Boolean).join('\n—\n');
+  c.stage = ns; c.recruiter = nr; if(nc) c.comments = cmt;
+  try {
+    await fetch(SCRIPT_URL, {
+      method:'POST', mode:'no-cors',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ action:'updateCandidate', rowId:c.rowId, stage:ns, recruiter:nr, comments:cmt }),
+    });
+    renderTable(filtered.length?filtered:candidates);
+    renderDash();
+    closeEdit();
+    showToast('✓ Updated', 'ok');
+  } catch { showToast('Error saving', 'er'); }
+}
+
+// ══ ADD CANDIDATE ══════════════════════════════════════════════
+async function submitCandidate() {
+  const name = document.getElementById('aN').value.trim();
+  const pos  = document.getElementById('aPo').value.trim();
+  const rec  = document.getElementById('aRe').value.trim();
+  const msg  = document.getElementById('formMsg');
+  if (!name||!pos||!rec) {
+    msg.className='form-msg err';msg.textContent='⚠ Name, Position and Recruiter are required.';return;
+  }
+  const btn = document.getElementById('submitBtn');
+  btn.innerHTML='<span class="spin"></span> Saving…';btn.disabled=true;
+  const payload = {
+    action:'addCandidate', name, pos,
+    email:   document.getElementById('aE').value.trim(),
+    phone:   document.getElementById('aPh').value.trim(),
+    position: pos,
+    source:  document.getElementById('aSr').value,
+    stage:   document.getElementById('aSt').value,
+    recruiter: rec,
+    date:    document.getElementById('aDt').value || new Date().toISOString().slice(0,10),
+    comments:document.getElementById('aCo').value.trim(),
+  };
+  try {
+    await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    candidates.push({...payload, rowId:'BC-NEW-'+Date.now()});
+    filtered=[...candidates];
+    renderDash();
+    msg.className='form-msg ok';msg.textContent='✓ Saved to Google Sheets!';
+    clearAdd(true);
+    showToast('✓ Candidate added','ok');
+  } catch {
+    msg.className='form-msg err';msg.textContent='⚠ Save failed — check SCRIPT_URL.';
+  } finally {
+    btn.innerHTML='Save Candidate';btn.disabled=false;
+  }
+}
+function clearAdd(keepMsg) {
+  ['aN','aE','aPh','aPo','aRe','aCo'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('aDt').value=new Date().toISOString().slice(0,10);
+  if(!keepMsg) document.getElementById('formMsg').textContent='';
+}
+
+// ══ FILTER ════════════════════════════════════════════════════
+function doFilter() {
+  const q  = document.getElementById('searchQ').value.toLowerCase();
+  const fs = document.getElementById('fStage').value;
+  const fp = document.getElementById('fPos').value;
+  filtered = candidates.filter(c => {
+    const mq = !q || [c.name,c.position,c.recruiter,c.source].join(' ').toLowerCase().includes(q);
+    return mq && (!fs||c.stage===fs) && (!fp||c.position===fp);
+  });
+  renderTable(filtered);
+}
+function buildPosFilter() {
+  const pos = [...new Set(candidates.map(c=>c.position))].sort();
+  document.getElementById('fPos').innerHTML =
+    '<option value="">All Positions</option>' + pos.map(p=>`<option>${x(p)}</option>`).join('');
+}
+
+// ══ DASHBOARD ══════════════════════════════════════════════════
+function renderDash() {
+  const n = s => candidates.filter(c=>c.stage===s).length;
+  document.getElementById('sT').textContent = candidates.length;
+  document.getElementById('sA').textContent = n('Screening')+n('Interview 1')+n('Interview 2');
+  document.getElementById('sO').textContent = n('Offered');
+  document.getElementById('sH').textContent = n('Hired');
+  document.getElementById('sR').textContent = n('Rejected');
+
+  const segs = [
+    {l:'Screening',   c:'#3730A3'},{l:'Interview 1',c:'#92400E'},
+    {l:'Interview 2', c:'#075985'},{l:'Offered',    c:'#065F46'},
+    {l:'Hired',       c:'#064E3B'},{l:'Rejected',   c:'#991B1B'},
+  ];
+  const tot = candidates.length||1;
+  document.getElementById('plTrack').innerHTML = segs.map(s =>
+    `<div class="pl-seg" style="background:${s.c};flex:${Math.max(n(s.l),.2)}" title="${s.l}: ${n(s.l)}">${n(s.l)||''}</div>`
+  ).join('');
+  document.getElementById('plLeg').innerHTML = segs.map(s =>
+    `<div class="pl-li"><div class="pl-dot" style="background:${s.c}"></div>${s.l} (${n(s.l)})</div>`
+  ).join('');
+
+  const rec = [...candidates].slice(-5).reverse();
+  document.getElementById('recentList').innerHTML = rec.length
+    ? rec.map(c => `<div class="recent-row">
+        <span class="badge ${bc(c.stage)}">${x(c.stage)}</span>
+        <span style="font-weight:600">${x(c.name)}</span>
+        <span style="color:var(--text-lt)">${x(c.position)}</span>
+        <span style="margin-left:auto;font-size:11px;color:var(--text-faint)">${x(c.date||'')}</span>
+      </div>`).join('')
+    : '<span style="color:var(--text-lt);font-style:italic;font-size:13px">No candidates yet.</span>';
+}
+
+// ══ UTILS ═════════════════════════════════════════════════════
+function bc(s){return{Screening:'b-sc','Interview 1':'b-i1','Interview 2':'b-i2',Offered:'b-of',Hired:'b-hi',Rejected:'b-re'}[s]||'b-sc'}
+function x(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+let _t;
+function showToast(msg,type=''){
+  clearTimeout(_t);
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.className='show'+(type?' '+type:'');
+  _t=setTimeout(()=>el.className='',3200);
+}
+
+// ══ INIT ══════════════════════════════════════════════════════
+document.getElementById('aDt').value=new Date().toISOString().slice(0,10);
+loadData();
+</script>
+</body>
+</html>
