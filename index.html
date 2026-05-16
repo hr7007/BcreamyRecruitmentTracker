@@ -4484,8 +4484,20 @@ let activeSectionId = null;
 let editingFieldIdx = null;
 let activeDmTab = null;
 
-// ═══ LOAD SCHEMA FROM STORAGE ═══════════════════════════════
-function loadSchema(){
+// ═══ LOAD SCHEMA — fetches from Sheets, falls back to localStorage
+async function loadSchema(){
+  // 1. Try Google Sheets first (so all team members get admin changes)
+  try{
+    const r = await fetch(`${SCRIPT_URL}?action=getSchema`);
+    const d = await r.json();
+    if(d.success && d.schema){
+      const remote = JSON.parse(d.schema);
+      schema = remote;
+      localStorage.setItem('bcreamy_schema', d.schema); // cache locally
+      return;
+    }
+  }catch{}
+  // 2. Fall back to localStorage cache
   try{
     const saved = localStorage.getItem('bcreamy_schema');
     if(saved) schema = JSON.parse(saved);
@@ -4555,7 +4567,7 @@ async function loadData(){
   try{
     const r=await fetch(`${SCRIPT_URL}?action=getCandidates`);
     const d=await r.json();
-    candidates=d.candidates||[]; filtered=[...candidates];
+    candidates=(d.candidates||[]).reverse(); filtered=[...candidates];
     buildFilterDropdowns();
     renderTable(candidates);
     renderDash();
@@ -5168,10 +5180,12 @@ function showToast(msg,type=''){
 }
 
 // ═══ INIT ════════════════════════════════════════════════════
-loadSchema();
-renderDynamicForm();
-renderDash();
-loadData();
+(async () => {
+  await loadSchema();   // wait for remote schema before rendering
+  renderDynamicForm();
+  renderDash();
+  loadData();           // also pulls latest candidates
+})();
 </script>
 </body>
 </html>
