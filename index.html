@@ -4591,19 +4591,57 @@ function lockAdmin(){
 }
 
 // ═══ DATA ════════════════════════════════════════════════════
+// normKey: converts any Sheets column header → lowercase camelCase key
+// so "Full Name" → "name", "Application Date" → "date", etc.
+// This ensures c[f.key] always finds the right value regardless of
+// how the column header was written in Google Sheets.
+function normKey(header) {
+  // Direct known mappings from default schema
+  const MAP = {
+    'rowid':'rowId', 'row id':'rowId', 'row_id':'rowId',
+    'name':'name', 'full name':'name', 'fullname':'name', 'candidate name':'name',
+    'email':'email', 'email address':'email',
+    'phone':'phone', 'phone number':'phone', 'mobile':'phone', 'contact':'phone',
+    'date':'date', 'application date':'date', 'applied date':'date', 'applied on':'date',
+    'position':'position', 'position applied':'position', 'position applied for':'position',
+    'role':'position', 'job title':'position',
+    'source':'source',
+    'stage':'stage', 'current stage':'stage', 'status':'stage',
+    'recruiter':'recruiter', 'assigned recruiter':'recruiter', 'hr':'recruiter',
+    'comments':'comments', 'notes':'comments', 'comments / notes':'comments',
+    'feedback':'comments', 'interviewer notes':'comments',
+    'updatedat':'updatedAt', 'updated at':'updatedAt', 'last updated':'updatedAt',
+  };
+  const lower = String(header).trim().toLowerCase();
+  return MAP[lower] || lower.replace(/[^a-z0-9]+(.)/g, (_,c) => c.toUpperCase());
+}
+
+// normalise a raw candidate object from Sheets so keys match schema
+function normaliseCandidate(raw) {
+  const out = {};
+  Object.keys(raw).forEach(k => {
+    out[normKey(k)] = raw[k];   // normalised key
+    out[k] = raw[k];            // also keep original key as fallback
+  });
+  return out;
+}
+
 async function loadData(){
   const tb=document.getElementById('tBody');
   tb.innerHTML='<tr><td colspan="99" class="empty-td"><span class="spin"></span> Fetching…</td></tr>';
   try{
     const r=await fetch(`${SCRIPT_URL}?action=getCandidates`);
     const d=await r.json();
-    candidates=(d.candidates||[]).reverse(); filtered=[...candidates];
+    // Normalise all candidate keys so schema f.key always resolves correctly
+    candidates=(d.candidates||[]).map(normaliseCandidate).reverse();
+    filtered=[...candidates];
     buildFilterDropdowns();
     renderTable(candidates);
     renderDash();
     renderDynamicForm();
-  }catch{
+  }catch(e){
     tb.innerHTML='<tr><td colspan="99" class="empty-td">⚠ Cannot reach backend. Check SCRIPT_URL.</td></tr>';
+    console.error('loadData error:', e);
   }
 }
 
@@ -4633,7 +4671,8 @@ function renderTable(rows){
     const ec=adminMode?' editable':'';
     const hp=pending[c.rowId]?' has-pending':'';
     const cells=fields.map(f=>{
-      const val=c[f.key]||'';
+      // Try schema key first, then normalised variants as fallback
+      const val=c[f.key] || c[normKey(f.key)] || c[f.label] || c[normKey(f.label)] || '';
       if(f.key==='stage')
         return `<td class="${ec}" ${adminMode?`onclick="iesel(event,${ri},'stage')"`:''}>
           <span class="badge ${bc(val)}">${x(val)}</span></td>`;
@@ -4783,7 +4822,9 @@ function doFilter(){
   const fp=document.getElementById('fPos').value;
   filtered=candidates.filter(c=>{
     const mq=!q||Object.values(c).join(' ').toLowerCase().includes(q);
-    return mq&&(!fs||c.stage===fs)&&(!fp||c.position===fp);
+    const cStage=c.stage||c['Current Stage']||'';
+    const cPos=c.position||c['Position Applied']||c['Position Applied For']||'';
+    return mq&&(!fs||cStage===fs)&&(!fp||cPos===fp);
   });
   renderTable(filtered);
 }
@@ -4791,19 +4832,22 @@ function buildFilterDropdowns(){
   const stageOpts=schema.dropdowns.stage?.options||[];
   document.getElementById('fStage').innerHTML=
     '<option value="">All Stages</option>'+stageOpts.map(s=>`<option>${x(s)}</option>`).join('');
-  const pos=[...new Set(candidates.map(c=>c.position).filter(Boolean))].sort();
+  const pos=[...new Set(candidates.map(c=>
+    c.position||c['Position Applied']||c['Position Applied For']||''
+  ).filter(Boolean))].sort();
   document.getElementById('fPos').innerHTML=
     '<option value="">All Positions</option>'+pos.map(p=>`<option>${x(p)}</option>`).join('');
 }
 
 // ═══ DASHBOARD (driven by statCards schema) ══════════════════
 function countStage(stage){
+  const getStage=c=>c.stage||c['Current Stage']||'';
   if(stage==='__all__') return candidates.length;
   if(stage==='__active__'){
     const activeStages=(schema.dropdowns.stage?.options||[]).filter(s=>!['Offered','Hired','Rejected'].includes(s));
-    return candidates.filter(c=>activeStages.includes(c.stage)).length;
+    return candidates.filter(c=>activeStages.includes(getStage(c))).length;
   }
-  return candidates.filter(c=>c.stage===stage).length;
+  return candidates.filter(c=>getStage(c)===stage).length;
 }
 const COLOR_MAP={
   'red-yellow':'linear-gradient(90deg,#D42B2B,#F5C518)',
@@ -4829,7 +4873,7 @@ function renderDash(){
     {l:'Interview 2',c:'#0EA5E9'},{l:'Offered',c:'#22C55E'},
     {l:'Hired',c:'#16A34A'},{l:'Rejected',c:'#D42B2B'},
   ];
-  const n=s=>candidates.filter(c=>c.stage===s).length;
+  const n=s=>candidates.filter(c=>(c.stage||c['Current Stage']||'')===s).length;
   document.getElementById('plTrack').innerHTML=segs.map(s=>
     `<div class="ps" style="background:${s.c};flex:${Math.max(n(s.l),.2)}" title="${s.l}: ${n(s.l)}">${n(s.l)||''}</div>`
   ).join('');
@@ -4839,10 +4883,10 @@ function renderDash(){
   const rec=[...candidates].slice(-5).reverse();
   document.getElementById('recentList').innerHTML=rec.length
     ?rec.map(c=>`<div class="recent-row">
-        <span class="badge ${bc(c.stage)}">${x(c.stage)}</span>
-        <span style="font-weight:700">${x(c.name)}</span>
-        <span style="color:var(--text-mid)">${x(c.position||'')} </span>
-        <span style="margin-left:auto;font-size:11px;color:var(--text-dim)">${x(c.date||'')} </span>
+        <span class="badge ${bc(c.stage||c['Current Stage']||'')}">${x(c.stage||c['Current Stage']||'—')}</span>
+        <span style="font-weight:700">${x(c.name||c['Full Name']||'—')}</span>
+        <span style="color:var(--text-mid)">${x(c.position||c['Position Applied']||'')} </span>
+        <span style="margin-left:auto;font-size:11px;color:var(--text-dim)">${x(c.date||c['Application Date']||'')} </span>
       </div>`).join('')
     :'<span style="color:var(--text-dim);font-style:italic;font-size:13px">No candidates yet.</span>';
 }
@@ -4850,14 +4894,14 @@ function renderDash(){
 // ═══ DETAIL MODAL ════════════════════════════════════════════
 function openDetail(ri){
   const c=candidates[ri];
-  document.getElementById('dName').textContent=c.name||'Candidate';
+  document.getElementById('dName').textContent=c.name||c['Full Name']||'Candidate';
   const commentsField=allFields().find(f=>f.key==='comments');
   document.getElementById('dCmt').textContent=c.comments||'No comments yet.';
   document.getElementById('dGrid').innerHTML=allFields()
     .filter(f=>f.key!=='comments')
-    .map(f=>`<div class="df"><div class="df-l">${x(f.label)}</div>
-      <div class="df-v">${f.key==='stage'?`<span class="badge ${bc(c[f.key]||'')}">
-        ${x(c[f.key]||'—')}</span>`:x(c[f.key]||'—')}</div></div>`).join('');
+    .map(f=>{const dv=c[f.key]||c[normKey(f.key)]||c[f.label]||'';
+      return `<div class="df"><div class="df-l">${x(f.label)}</div>
+      <div class="df-v">${f.key==='stage'?`<span class="badge ${bc(dv)}">${x(dv||'—')}</span>`:x(dv||'—')}</div></div>`;}).join('');
   document.getElementById('dActs').innerHTML=`
     <button class="btn btn-red btn-sm" onclick="closeDetail();openEdit(${ri})">Update Stage</button>
     ${adminMode?`<button class="btn btn-yellow btn-sm" onclick="closeDetail();openAdminEdit(${ri})">✎ Edit All Fields</button>`:''}
@@ -4898,7 +4942,7 @@ function openAdminEdit(ri){
   adminIdx=ri; const c=candidates[ri];
   document.getElementById('adminEditGrid').innerHTML=`<div class="fgrid">`+
     allFields().map(f=>{
-      const val=c[f.key]||'';
+      const val=c[f.key]||c[normKey(f.key)]||c[f.label]||'';
       let inp='';
       if(f.type==='select'){
         const opts=(f.optionsKey&&schema.dropdowns[f.optionsKey]?.options)||[];
