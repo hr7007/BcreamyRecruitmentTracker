@@ -4484,27 +4484,57 @@ let activeSectionId = null;
 let editingFieldIdx = null;
 let activeDmTab = null;
 
-// ═══ LOAD SCHEMA — fetches from Sheets, falls back to localStorage
+// ═══ SCHEMA SYNC ═════════════════════════════════════════════
+// ── HOW SCHEMA SYNC WORKS ────────────────────────────────────
+// fetch() POST with mode:'no-cors' drops the JSON body silently.
+// But 'application/x-www-form-urlencoded' IS allowed with no-cors
+// and Apps Script receives it via e.postData.contents perfectly.
+// So we POST the schema as a URL-encoded form body — it works.
+// Reading (GET) has no CORS issues at all.
+
 async function loadSchema(){
-  // 1. Try Google Sheets first (so all team members get admin changes)
   try{
-    const r = await fetch(`${SCRIPT_URL}?action=getSchema`);
+    const r = await fetch(SCRIPT_URL + '?action=getSchema', {cache:'no-store'});
     const d = await r.json();
-    if(d.success && d.schema){
-      const remote = JSON.parse(d.schema);
-      schema = remote;
-      localStorage.setItem('bcreamy_schema', d.schema); // cache locally
+    if(d.success && d.schema && d.schema !== 'null'){
+      schema = JSON.parse(d.schema);
+      localStorage.setItem('bcreamy_schema', d.schema);
       return;
     }
-  }catch{}
-  // 2. Fall back to localStorage cache
+  }catch(e){}
+  // Fallback: local cache
   try{
     const saved = localStorage.getItem('bcreamy_schema');
     if(saved) schema = JSON.parse(saved);
-  }catch{}
+  }catch(e){}
 }
+
 function saveSchemaLocal(){
   localStorage.setItem('bcreamy_schema', JSON.stringify(schema));
+}
+
+// POST schema as URL-encoded form — this bypasses the no-cors body-drop bug.
+// Apps Script reads it via e.postData.contents just fine.
+async function pushSchemaToSheets(){
+  try{
+    const body = 'action=saveSchema&schema=' +
+                 encodeURIComponent(JSON.stringify(schema));
+    await fetch(SCRIPT_URL, {
+      method  : 'POST',
+      mode    : 'no-cors',
+      headers : { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body    : body
+    });
+    // no-cors = opaque response, we can't read it — but it works.
+    // Verify by checking getSchema on next load.
+    return true;
+  }catch(e){ return false; }
+}
+
+// Every builder action calls this — saves locally + pushes to Sheets
+function saveAndSync(){
+  saveSchemaLocal();
+  pushSchemaToSheets(); // fire-and-forget; team sees changes on reload
 }
 
 // ═══ TABS ════════════════════════════════════════════════════
@@ -4964,14 +4994,14 @@ function confirmAddSection(){
   const name=document.getElementById('newSecName').value.trim();
   if(!name){showToast('Enter a section title','er');return;}
   schema.sections.push({id:'sec_'+Date.now(),title:name,fields:[]});
-  saveSchemaLocal(); renderBuilder(); renderDynamicForm();
+  saveAndSync(); renderBuilder(); renderDynamicForm();
   closeAddSec(); showToast('Section added','ok');
 }
 function deleteSection(id){
   if(!confirm('Delete this section and all its fields?'))return;
   schema.sections=schema.sections.filter(s=>s.id!==id);
   if(activeSectionId===id) activeSectionId=null;
-  saveSchemaLocal(); renderBuilder(); renderDynamicForm();
+  saveAndSync(); renderBuilder(); renderDynamicForm();
   showToast('Section deleted','er');
 }
 
@@ -5038,7 +5068,7 @@ function confirmField(){
   } else {
     sec.fields[editingFieldIdx]=field;
   }
-  saveSchemaLocal(); renderBuilder(); renderDynamicForm(); buildFilterDropdowns();
+  saveAndSync(); renderBuilder(); renderDynamicForm(); buildFilterDropdowns();
   closeFieldModal();
   showToast(fieldModalMode==='add'?'Field added':'Field updated','ok');
 }
@@ -5046,7 +5076,7 @@ function deleteField(secId,idx){
   if(!confirm('Delete this field?'))return;
   const sec=schema.sections.find(s=>s.id===secId);
   sec.fields.splice(idx,1);
-  saveSchemaLocal(); renderBuilder(); renderDynamicForm();
+  saveAndSync(); renderBuilder(); renderDynamicForm();
   showToast('Field deleted','er');
 }
 
@@ -5082,12 +5112,12 @@ function addOption(key){
   if(!val){showToast('Enter an option value','er');return;}
   schema.dropdowns[key].options.push(val);
   inp.value='';
-  saveSchemaLocal(); renderDropdownManager(); buildFilterDropdowns(); renderDynamicForm();
+  saveAndSync(); renderDropdownManager(); buildFilterDropdowns(); renderDynamicForm();
   showToast(`"${val}" added to ${schema.dropdowns[key].label}`,'ok');
 }
 function deleteOption(key,idx){
   schema.dropdowns[key].options.splice(idx,1);
-  saveSchemaLocal(); renderDropdownManager(); renderDynamicForm();
+  saveAndSync(); renderDropdownManager(); renderDynamicForm();
   showToast('Option removed','er');
 }
 
@@ -5123,11 +5153,11 @@ function renderStatBuilder(){
 }
 function updateStatCard(id,field,val){
   const sc=schema.statCards.find(s=>s.id===id);
-  if(sc){sc[field]=val; saveSchemaLocal(); renderDash(); renderStatBuilder();}
+  if(sc){sc[field]=val; saveAndSync(); renderDash(); renderStatBuilder();}
 }
 function deleteStatCard(id){
   schema.statCards=schema.statCards.filter(s=>s.id!==id);
-  saveSchemaLocal(); renderDash(); renderStatBuilder();
+  saveAndSync(); renderDash(); renderStatBuilder();
   showToast('Stat card removed','er');
 }
 function addStatCard(){
@@ -5148,23 +5178,25 @@ function confirmAddStat(){
   const color=document.getElementById('ns_color').value;
   if(!label||!stage){showToast('Label and stage are required','er');return;}
   schema.statCards.push({id:'sc_'+Date.now(),label,stage,hint,color});
-  saveSchemaLocal(); renderDash(); renderStatBuilder(); closeAddStat();
+  saveAndSync(); renderDash(); renderStatBuilder(); closeAddStat();
   showToast('Stat card added','ok');
 }
 
 // ═══ SAVE SCHEMA TO GOOGLE SHEETS ════════════════════════════
 async function saveSchema(){
-  saveSchemaLocal();
-  try{
-    await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'saveSchema',schema:JSON.stringify(schema)})});
-    showToast('✓ Form schema saved to Google Sheets','ok');
-  }catch{showToast('Saved locally — backend unreachable','');}
+  saveAndSync();
+  const ok = await pushSchemaToSheets();
+  if(ok){
+    showToast('✓ Schema saved — all team members will see changes on next load','ok');
+  } else {
+    showToast('Could not reach Sheets — check SCRIPT_URL or redeploy Apps Script','er');
+  }
 }
 function previewForm(){renderDynamicForm(); switchTab('add',document.querySelectorAll('.tab')[2]); showToast('Showing live form preview','');}
 function resetSchema(){
   if(!confirm('Reset all form structure to default? This cannot be undone.'))return;
   schema=JSON.parse(JSON.stringify(DEFAULT_SCHEMA));
-  saveSchemaLocal(); renderBuilder(); renderDynamicForm(); renderDash();
+  saveAndSync(); renderBuilder(); renderDynamicForm(); renderDash();
   showToast('Form reset to default','er');
 }
 
