@@ -4633,11 +4633,15 @@ function normKey(header) {
 function normaliseCandidate(raw) {
   const out = {};
   Object.keys(raw).forEach(k => {
-    out[normKey(k)] = raw[k];   // normalised key
-    out[k] = raw[k];            // also keep original key as fallback
+    out[normKey(k)] = raw[k];  // normalised key  e.g. "Full Name" → "name"
+    out[k]          = raw[k];  // keep original too
   });
-  // _sheetRow is the actual Google Sheets row number (fallback for old records without rowId)
-  if (raw._sheetRow) out._sheetRow = raw._sheetRow;
+  // rowId MUST survive normalisation — it is the primary key for all writes
+  // normKey maps 'rowId','row id','Row ID' etc. → 'rowId', so out.rowId is set.
+  // Double-check with common variants just in case.
+  if (!out.rowId) {
+    out.rowId = raw.rowId || raw['Row ID'] || raw['row_id'] || raw['ID'] || '';
+  }
   return out;
 }
 
@@ -4757,7 +4761,7 @@ async function saveAllPending(){
   if(!ids.length){showToast('No pending changes','');return;}
   for(const rowId of ids){
     const c=candidates.find(z=>z.rowId===rowId); if(!c)continue;
-    try{await postToSheets({action:'updateCandidate',rowId,_sheetRow:c._sheetRow,name:c.name,email:c.email,...pending[rowId]});}catch(e){console.error(e);}
+    try{await postToSheets({action:'updateCandidate',rowId:c.rowId,...pending[rowId]});}catch(e){console.error(e);}
   }
   pending={};
   renderTable(filtered.length?filtered:candidates);
@@ -4947,7 +4951,7 @@ async function saveEdit(){
   const cmt=[c.comments,nc].filter(Boolean).join('\n—\n');
   c.stage=ns; c.recruiter=nr; if(nc)c.comments=cmt;
   try{
-    await postToSheets({action:'updateCandidate',rowId:c.rowId,_sheetRow:c._sheetRow,name:c.name,email:c.email,stage:ns,recruiter:nr,comments:cmt});
+    await postToSheets({action:'updateCandidate',rowId:c.rowId,stage:ns,recruiter:nr,comments:cmt});
     renderTable(filtered.length?filtered:candidates); renderDash();
     closeEdit(); showToast('✓ Updated','ok');
   }catch{showToast('Error saving','er');}
@@ -4979,7 +4983,7 @@ async function saveAdminEdit(){
   allFields().forEach(f=>{upd[f.key]=document.getElementById('ae_'+f.key)?.value||'';});
   Object.assign(c,upd);
   try{
-    await postToSheets({action:'updateCandidate',rowId:c.rowId,_sheetRow:c._sheetRow,...upd});
+    await postToSheets({action:'updateCandidate',rowId:c.rowId,...upd});
     delete pending[c.rowId];
     renderTable(filtered.length?filtered:candidates); renderDash();
     closeAdminEdit(); showToast('✓ Record fully updated','ok');
@@ -4989,7 +4993,7 @@ async function deleteRecord(){
   const c=candidates[adminIdx];
   if(!confirm(`Permanently delete "${c.name||'this record'}"?`))return;
   try{
-    await postToSheets({action:'deleteCandidate',rowId:c.rowId,_sheetRow:c._sheetRow,name:c.name,email:c.email});
+    await postToSheets({action:'deleteCandidate',rowId:c.rowId});
     candidates.splice(adminIdx,1); filtered=[...candidates];
     renderTable(candidates); renderDash(); closeAdminEdit();
     showToast('Record deleted','er');
@@ -5002,7 +5006,7 @@ async function quickDelete(ri){
   const c=candidates[ri];
   const label=c.name||c['Full Name']||'this candidate';
   if(!confirm(`Permanently delete "${label}"?\nThis cannot be undone.`))return;
-  const ok=await postToSheets({action:'deleteCandidate',rowId:c.rowId,_sheetRow:c._sheetRow,name:c.name,email:c.email});
+  const ok=await postToSheets({action:'deleteCandidate',rowId:c.rowId});
   if(ok){
     candidates.splice(ri,1); filtered=[...candidates];
     renderTable(candidates); renderDash();
