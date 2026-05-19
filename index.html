@@ -4636,6 +4636,8 @@ function normaliseCandidate(raw) {
     out[normKey(k)] = raw[k];   // normalised key
     out[k] = raw[k];            // also keep original key as fallback
   });
+  // _sheetRow is the actual Google Sheets row number (fallback for old records without rowId)
+  if (raw._sheetRow) out._sheetRow = raw._sheetRow;
   return out;
 }
 
@@ -4700,10 +4702,11 @@ function renderTable(rows){
     return `<tr>
       <td style="color:var(--text-dim);font-size:11px">${i+1}</td>
       ${cells}
-      <td>
+      <td style="white-space:nowrap">
         <button class="btn btn-ghost btn-sm" onclick="openDetail(${ri})">View</button>
         ${adminMode
-          ?`<button class="btn btn-yellow btn-sm" style="margin-left:4px" onclick="openAdminEdit(${ri})">✎ Edit</button>`
+          ?`<button class="btn btn-yellow btn-sm" style="margin-left:4px" onclick="openAdminEdit(${ri})">✎ Edit</button>
+            <button onclick="quickDelete(${ri})" title="Delete" style="margin-left:6px;background:#7F1D1D;border:none;color:#fff;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:15px;line-height:1;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;transition:background .2s" onmouseover="this.style.background='#DC2626'" onmouseout="this.style.background='#7F1D1D'">✕</button>`
           :`<button class="btn btn-red btn-sm" style="margin-left:4px" onclick="openEdit(${ri})">Update</button>`}
       </td>
     </tr>`;
@@ -4754,7 +4757,7 @@ async function saveAllPending(){
   if(!ids.length){showToast('No pending changes','');return;}
   for(const rowId of ids){
     const c=candidates.find(z=>z.rowId===rowId); if(!c)continue;
-    try{await postToSheets({action:'updateCandidate',rowId,...pending[rowId]});}catch(e){console.error(e);}
+    try{await postToSheets({action:'updateCandidate',rowId,_sheetRow:c._sheetRow,name:c.name,email:c.email,...pending[rowId]});}catch(e){console.error(e);}
   }
   pending={};
   renderTable(filtered.length?filtered:candidates);
@@ -4944,7 +4947,7 @@ async function saveEdit(){
   const cmt=[c.comments,nc].filter(Boolean).join('\n—\n');
   c.stage=ns; c.recruiter=nr; if(nc)c.comments=cmt;
   try{
-    await postToSheets({action:'updateCandidate',rowId:c.rowId,stage:ns,recruiter:nr,comments:cmt});
+    await postToSheets({action:'updateCandidate',rowId:c.rowId,_sheetRow:c._sheetRow,name:c.name,email:c.email,stage:ns,recruiter:nr,comments:cmt});
     renderTable(filtered.length?filtered:candidates); renderDash();
     closeEdit(); showToast('✓ Updated','ok');
   }catch{showToast('Error saving','er');}
@@ -4976,7 +4979,7 @@ async function saveAdminEdit(){
   allFields().forEach(f=>{upd[f.key]=document.getElementById('ae_'+f.key)?.value||'';});
   Object.assign(c,upd);
   try{
-    await postToSheets({action:'updateCandidate',rowId:c.rowId,...upd});
+    await postToSheets({action:'updateCandidate',rowId:c.rowId,_sheetRow:c._sheetRow,...upd});
     delete pending[c.rowId];
     renderTable(filtered.length?filtered:candidates); renderDash();
     closeAdminEdit(); showToast('✓ Record fully updated','ok');
@@ -4986,13 +4989,28 @@ async function deleteRecord(){
   const c=candidates[adminIdx];
   if(!confirm(`Permanently delete "${c.name||'this record'}"?`))return;
   try{
-    await postToSheets({action:'deleteCandidate',rowId:c.rowId});
+    await postToSheets({action:'deleteCandidate',rowId:c.rowId,_sheetRow:c._sheetRow,name:c.name,email:c.email});
     candidates.splice(adminIdx,1); filtered=[...candidates];
     renderTable(candidates); renderDash(); closeAdminEdit();
     showToast('Record deleted','er');
   }catch{showToast('Error deleting','er');}
 }
 function closeAdminEdit(){document.getElementById('adminOv').classList.remove('open');}
+
+// Quick delete straight from the table row (admin only)
+async function quickDelete(ri){
+  const c=candidates[ri];
+  const label=c.name||c['Full Name']||'this candidate';
+  if(!confirm(`Permanently delete "${label}"?\nThis cannot be undone.`))return;
+  const ok=await postToSheets({action:'deleteCandidate',rowId:c.rowId,_sheetRow:c._sheetRow,name:c.name,email:c.email});
+  if(ok){
+    candidates.splice(ri,1); filtered=[...candidates];
+    renderTable(candidates); renderDash();
+    showToast('Record deleted','er');
+  } else {
+    showToast('Error deleting — check connection','er');
+  }
+}
 
 // ═══ FORM BUILDER ════════════════════════════════════════════
 function renderBuilder(){
