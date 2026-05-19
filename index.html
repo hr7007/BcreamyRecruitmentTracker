@@ -4537,6 +4537,19 @@ function saveAndSync(){
   pushSchemaToSheets(); // fire-and-forget; team sees changes on reload
 }
 
+// Central POST helper — uses form-encoding so no-cors doesn't drop the body
+async function postToSheets(payload) {
+  try {
+    await fetch(SCRIPT_URL, {
+      method : 'POST',
+      mode   : 'no-cors',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body   : 'data=' + encodeURIComponent(JSON.stringify(payload))
+    });
+    return true;
+  } catch(e) { console.error('postToSheets:', e); return false; }
+}
+
 // ═══ TABS ════════════════════════════════════════════════════
 function switchTab(n,btn){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
@@ -4741,7 +4754,7 @@ async function saveAllPending(){
   if(!ids.length){showToast('No pending changes','');return;}
   for(const rowId of ids){
     const c=candidates.find(z=>z.rowId===rowId); if(!c)continue;
-    try{await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'updateCandidate',rowId,...pending[rowId]})});}catch{}
+    try{await postToSheets({action:'updateCandidate',rowId,...pending[rowId]});}catch(e){console.error(e);}
   }
   pending={};
   renderTable(filtered.length?filtered:candidates);
@@ -4796,7 +4809,7 @@ async function submitCandidate(){
   // fallback defaults
   if(!payload.date) payload.date=new Date().toISOString().slice(0,10);
   try{
-    await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    await postToSheets(payload);
     candidates.push({...payload,rowId:'BC-NEW-'+Date.now()});
     filtered=[...candidates]; renderDash();
     msg.className='fm ok'; msg.textContent='✓ Candidate saved to Google Sheets!';
@@ -4931,7 +4944,7 @@ async function saveEdit(){
   const cmt=[c.comments,nc].filter(Boolean).join('\n—\n');
   c.stage=ns; c.recruiter=nr; if(nc)c.comments=cmt;
   try{
-    await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'updateCandidate',rowId:c.rowId,stage:ns,recruiter:nr,comments:cmt})});
+    await postToSheets({action:'updateCandidate',rowId:c.rowId,stage:ns,recruiter:nr,comments:cmt});
     renderTable(filtered.length?filtered:candidates); renderDash();
     closeEdit(); showToast('✓ Updated','ok');
   }catch{showToast('Error saving','er');}
@@ -4963,7 +4976,7 @@ async function saveAdminEdit(){
   allFields().forEach(f=>{upd[f.key]=document.getElementById('ae_'+f.key)?.value||'';});
   Object.assign(c,upd);
   try{
-    await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'updateCandidate',rowId:c.rowId,...upd})});
+    await postToSheets({action:'updateCandidate',rowId:c.rowId,...upd});
     delete pending[c.rowId];
     renderTable(filtered.length?filtered:candidates); renderDash();
     closeAdminEdit(); showToast('✓ Record fully updated','ok');
@@ -4973,7 +4986,7 @@ async function deleteRecord(){
   const c=candidates[adminIdx];
   if(!confirm(`Permanently delete "${c.name||'this record'}"?`))return;
   try{
-    await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'deleteCandidate',rowId:c.rowId})});
+    await postToSheets({action:'deleteCandidate',rowId:c.rowId});
     candidates.splice(adminIdx,1); filtered=[...candidates];
     renderTable(candidates); renderDash(); closeAdminEdit();
     showToast('Record deleted','er');
