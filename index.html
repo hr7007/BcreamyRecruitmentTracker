@@ -2,418 +2,283 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>B'Creamy — Recruitment Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<!-- SheetJS for Excel import/export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
-  --red:#D42B2B;--red-dk:#A82020;--red-lt:#E84040;
-  --yellow:#F5C518;--yellow-dk:#C9A010;--yellow-lt:#FFD94A;
-  --black:#0A0A0A;--black-mid:#161616;--black-card:#1E1E1E;
-  --black-soft:#242424;--black-line:#2E2E2E;
-  --white:#FFFFFF;--text-main:#F0EAE0;--text-mid:#B0A090;
-  --text-dim:#705040;--border:#2E2E2E;--border-lt:#383838;
-  --success:#22C55E;--danger:#EF4444;
-  --shadow:0 4px 20px rgba(0,0,0,.5);--shadow-lg:0 12px 48px rgba(0,0,0,.7);
-  --r:10px;--r-lg:16px;--r-pill:99px;
+  --red:#D42B2B;--red-dk:#A82020;--red-lt:#F05050;
+  --yellow:#F5C518;--yellow-lt:#FFD94A;
+  --black:#0A0A0A;--card:#1A1A1A;--soft:#222;--line:#2E2E2E;--line-lt:#3A3A3A;
+  --text:#F0E8E0;--mid:#B0A090;--dim:#706050;--faint:#504030;
+  --green:#22C55E;--danger:#EF4444;
+  --r:10px;--r-lg:14px;--pill:99px;
+  --sh:0 4px 20px rgba(0,0,0,.6);--sh-lg:0 12px 40px rgba(0,0,0,.8);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{font-family:'Nunito',sans-serif;background:var(--black);color:var(--text-main);min-height:100vh}
+body{font-family:'Nunito',sans-serif;background:var(--black);color:var(--text);min-height:100vh}
 
-/* HEADER */
-.site-header{
-  background:var(--black);border-bottom:3px solid var(--red);
-  padding:0 32px;height:70px;
-  display:flex;align-items:center;justify-content:space-between;
-  position:sticky;top:0;z-index:300;
-  box-shadow:0 2px 24px rgba(212,43,43,.25);
-}
-.brand-logo{height:52px;object-fit:contain;filter:drop-shadow(0 0 8px rgba(212,43,43,.3))}
-.header-right{display:flex;align-items:center;gap:8px}
-.live-pill{
-  display:flex;align-items:center;gap:7px;padding:6px 14px;
-  background:rgba(245,197,24,.06);border:1px solid rgba(245,197,24,.18);border-radius:var(--r-pill);
-}
-.live-dot{
-  width:7px;height:7px;border-radius:50%;background:var(--success);
-  box-shadow:0 0 0 2px rgba(34,197,94,.2);animation:livepulse 2s ease infinite;
-}
-@keyframes livepulse{0%,100%{box-shadow:0 0 0 2px rgba(34,197,94,.2)}50%{box-shadow:0 0 0 5px rgba(34,197,94,.06)}}
+/* ── HEADER ── */
+.hdr{background:#0A0A0A;border-bottom:3px solid var(--red);height:66px;
+  padding:0 28px;display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:400;box-shadow:0 2px 20px rgba(212,43,43,.3)}
+.logo{height:50px;object-fit:contain;filter:drop-shadow(0 0 6px rgba(212,43,43,.4))}
+.hdr-right{display:flex;align-items:center;gap:8px}
+.live-pill{display:flex;align-items:center;gap:6px;padding:5px 12px;
+  background:rgba(245,197,24,.06);border:1px solid rgba(245,197,24,.2);border-radius:var(--pill)}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);
+  animation:pulse 2s ease infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 2px rgba(34,197,94,.2)}50%{box-shadow:0 0 0 5px rgba(34,197,94,.06)}}
 .live-txt{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--yellow)}
-.hdr-btn{
-  display:flex;align-items:center;gap:7px;padding:8px 18px;border-radius:var(--r-pill);
-  border:2px solid transparent;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;
-  letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .2s;
-}
-.admin-btn{background:transparent;border-color:rgba(212,43,43,.4);color:rgba(212,43,43,.7)}
-.admin-btn:hover{background:rgba(212,43,43,.12);border-color:var(--red);color:var(--red)}
-.admin-btn.unlocked{background:var(--red);border-color:var(--red);color:#fff;box-shadow:0 0 16px rgba(212,43,43,.4)}
+.admin-btn{display:flex;align-items:center;gap:6px;padding:7px 16px;border-radius:var(--pill);
+  border:2px solid rgba(212,43,43,.4);background:transparent;
+  font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;letter-spacing:.06em;
+  text-transform:uppercase;color:rgba(212,43,43,.8);cursor:pointer;transition:all .2s}
+.admin-btn:hover{background:rgba(212,43,43,.15);border-color:var(--red);color:var(--red)}
+.admin-btn.on{background:var(--red);border-color:var(--red);color:#fff;box-shadow:0 0 16px rgba(212,43,43,.5)}
 
-/* ADMIN BAR */
-.admin-bar{
-  display:none;background:linear-gradient(90deg,#1A0000,#200000);
-  border-bottom:2px solid var(--red-dk);padding:10px 32px;align-items:center;gap:14px;
-}
-.admin-bar.on{display:flex;flex-wrap:wrap}
+/* ── ADMIN BAR ── */
+.admin-bar{display:none;background:#150000;border-bottom:2px solid var(--red-dk);
+  padding:9px 28px;align-items:center;gap:12px;flex-wrap:wrap}
+.admin-bar.on{display:flex}
 .ab-lbl{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--red-lt)}
-.ab-hint{font-size:12px;color:rgba(212,43,43,.5)}
-.ab-save{
-  padding:7px 20px;background:var(--red);border:none;border-radius:var(--r-pill);
-  font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;
-  color:#fff;cursor:pointer;transition:all .2s;box-shadow:0 2px 10px rgba(212,43,43,.35);
-}
-.ab-save:hover{background:var(--red-lt)}
-.ab-exit{
-  padding:7px 16px;background:transparent;border:1px solid rgba(212,43,43,.25);border-radius:var(--r-pill);
-  font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:rgba(212,43,43,.45);cursor:pointer;transition:all .2s;
-}
-.ab-exit:hover{border-color:rgba(212,43,43,.5);color:rgba(212,43,43,.7)}
-.ab-builder-btn{
-  padding:7px 16px;background:rgba(245,197,24,.1);border:1px solid rgba(245,197,24,.3);border-radius:var(--r-pill);
-  font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;
-  color:var(--yellow);cursor:pointer;transition:all .2s;
-}
-.ab-builder-btn:hover{background:rgba(245,197,24,.2);border-color:var(--yellow)}
+.ab-hint{font-size:12px;color:rgba(212,43,43,.45);flex:1}
 
-/* TABS */
-.tab-bar{
-  background:var(--black-mid);border-bottom:1px solid var(--border);
-  padding:0 32px;display:flex;gap:0;overflow-x:auto;
-}
-.tab{
-  padding:15px 22px;background:none;border:none;
-  font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;
-  letter-spacing:.07em;text-transform:uppercase;color:var(--text-dim);cursor:pointer;
-  border-bottom:3px solid transparent;margin-bottom:-1px;transition:all .2s;white-space:nowrap;
-}
-.tab:hover{color:var(--text-mid)}
-.tab.active{color:var(--yellow);border-color:var(--yellow)}
+/* ── TABS ── */
+.tabs{background:#111;border-bottom:1px solid var(--line);padding:0 28px;display:flex;overflow-x:auto}
+.tab{padding:14px 20px;background:none;border:none;font-family:'Nunito',sans-serif;
+  font-size:12px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--dim);cursor:pointer;border-bottom:3px solid transparent;
+  margin-bottom:-1px;transition:all .2s;white-space:nowrap}
+.tab:hover{color:var(--mid)}
+.tab.on{color:var(--yellow);border-color:var(--yellow)}
 
-/* LAYOUT */
-.page{max-width:1360px;margin:0 auto;padding:30px 32px}
+/* ── PAGE ── */
+.page{max-width:1380px;margin:0 auto;padding:28px}
 .panel{display:none}
-.panel.active{display:block;animation:rise .28s ease}
+.panel.on{display:block;animation:rise .25s ease}
 @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.pg-title{font-family:'Fredoka One',cursive;font-size:28px;color:var(--white);letter-spacing:.02em;margin-bottom:4px}
-.pg-sub{font-size:13px;color:var(--text-dim);margin-bottom:26px}
+.pg-title{font-family:'Fredoka One',cursive;font-size:26px;color:#fff;margin-bottom:4px}
+.pg-sub{font-size:13px;color:var(--dim);margin-bottom:22px}
 
-/* STAT CARDS */
-.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:24px}
-.sc{
-  background:var(--black-card);border:1px solid var(--border);border-radius:var(--r-lg);
-  padding:22px 22px 18px;position:relative;overflow:hidden;
-  box-shadow:var(--shadow);transition:transform .2s,box-shadow .2s;
-}
-.sc:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,0,0,.6)}
-.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--red),var(--yellow))}
-.sc-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:var(--text-dim);margin-bottom:8px}
-.sc-num{font-family:'Fredoka One',cursive;font-size:42px;color:var(--white);line-height:1}
-.sc-hint{font-size:11px;color:var(--text-dim);margin-top:6px}
-.sc-del-btn{
-  position:absolute;top:10px;right:10px;
-  background:rgba(212,43,43,.15);border:1px solid rgba(212,43,43,.3);border-radius:50%;
-  width:22px;height:22px;display:none;align-items:center;justify-content:center;
-  font-size:11px;color:var(--red);cursor:pointer;transition:all .2s;
-}
-.sc-del-btn:hover{background:rgba(212,43,43,.35)}
-body.admin-on .sc-del-btn{display:flex}
+/* ── STAT CARDS ── */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:22px}
+.sc{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);
+  padding:20px 20px 16px;position:relative;overflow:hidden;transition:transform .2s}
+.sc:hover{transform:translateY(-2px)}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--red),var(--yellow))}
+.sc-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:var(--dim);margin-bottom:6px}
+.sc-num{font-family:'Fredoka One',cursive;font-size:40px;color:#fff;line-height:1}
+.sc-hint{font-size:11px;color:var(--dim);margin-top:4px}
 
-/* PIPELINE */
-.pipe-card{
-  background:var(--black-card);border:1px solid var(--border);border-radius:var(--r-lg);
-  padding:22px 24px;box-shadow:var(--shadow);margin-bottom:20px;
-}
-.pipe-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:var(--text-dim);margin-bottom:14px}
-.pipe-track{display:flex;gap:5px;height:44px;border-radius:var(--r);overflow:hidden}
-.ps{
-  display:flex;align-items:center;justify-content:center;
-  font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;color:#fff;
-  border-radius:8px;transition:flex .55s cubic-bezier(.4,0,.2,1);white-space:nowrap;overflow:hidden;min-width:4px;
-}
-.pipe-leg{display:flex;flex-wrap:wrap;gap:14px;margin-top:13px}
-.pl-li{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-mid)}
-.pl-dot{width:9px;height:9px;border-radius:50%}
-.recent-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px}
+/* ── PIPELINE ── */
+.pipe-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);
+  padding:20px 22px;margin-bottom:18px}
+.pipe-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:var(--dim);margin-bottom:12px}
+.pipe-track{display:flex;gap:4px;height:40px;border-radius:var(--r);overflow:hidden}
+.ps{display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:800;color:#fff;border-radius:7px;
+  transition:flex .5s ease;white-space:nowrap;overflow:hidden;min-width:4px}
+.pipe-leg{display:flex;flex-wrap:wrap;gap:12px;margin-top:11px}
+.pl-li{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mid)}
+.pl-dot{width:8px;height:8px;border-radius:50%}
+.recent-row{display:flex;align-items:center;gap:10px;padding:9px 0;
+  border-bottom:1px solid var(--line);font-size:13px}
 .recent-row:last-child{border:none}
 
-/* TOOLBAR */
-.toolbar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+/* ── TOOLBAR ── */
+.toolbar{display:flex;gap:9px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
 .srch{flex:1;min-width:200px;position:relative}
-.srch svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);pointer-events:none}
-.srch input{
-  width:100%;padding:10px 13px 10px 36px;border:1px solid var(--border-lt);border-radius:var(--r);
-  background:var(--black-card);font-family:'Nunito',sans-serif;font-size:13px;color:var(--text-main);
-  outline:none;transition:border .2s,box-shadow .2s;
-}
-.srch input::placeholder{color:var(--text-dim)}
+.srch svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none}
+.srch input{width:100%;padding:9px 12px 9px 34px;border:1px solid var(--line-lt);border-radius:var(--r);
+  background:var(--card);font-family:'Nunito',sans-serif;font-size:13px;color:var(--text);outline:none}
+.srch input::placeholder{color:var(--dim)}
 .srch input:focus{border-color:var(--yellow);box-shadow:0 0 0 3px rgba(245,197,24,.1)}
-.fsel{
-  padding:10px 13px;border:1px solid var(--border-lt);border-radius:var(--r);
-  background:var(--black-card);font-family:'Nunito',sans-serif;font-size:13px;color:var(--text-main);
-  outline:none;cursor:pointer;
-}
+.fsel{padding:9px 12px;border:1px solid var(--line-lt);border-radius:var(--r);
+  background:var(--card);font-family:'Nunito',sans-serif;font-size:13px;color:var(--text);outline:none;cursor:pointer}
 .fsel:focus{border-color:var(--yellow)}
 
-/* BUTTONS */
-.btn{
-  display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border:none;border-radius:var(--r);
-  font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;transition:all .18s;letter-spacing:.02em;
-}
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border:none;
+  border-radius:var(--r);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;
+  cursor:pointer;transition:all .18s;letter-spacing:.02em;white-space:nowrap}
 .btn-red{background:var(--red);color:#fff}
-.btn-red:hover{background:var(--red-lt);box-shadow:0 4px 14px rgba(212,43,43,.4)}
-.btn-yellow{background:var(--yellow);color:var(--black);font-weight:900}
+.btn-red:hover{background:var(--red-lt)}
+.btn-yellow{background:var(--yellow);color:#000;font-weight:900}
 .btn-yellow:hover{background:var(--yellow-lt)}
-.btn-ghost{background:transparent;border:1px solid var(--border-lt);color:var(--text-mid)}
+.btn-ghost{background:transparent;border:1px solid var(--line-lt);color:var(--mid)}
 .btn-ghost:hover{border-color:var(--yellow);color:var(--yellow)}
-.btn-ghost-red{background:transparent;border:1px solid rgba(212,43,43,.35);color:rgba(212,43,43,.7)}
-.btn-ghost-red:hover{border-color:var(--red);color:var(--red);background:rgba(212,43,43,.08)}
-.btn-sm{padding:6px 13px;font-size:12px}
-.btn-xs{padding:4px 10px;font-size:11px;font-weight:700}
+.btn-green{background:#16A34A;color:#fff}
+.btn-green:hover{background:#15803D}
+.btn-danger{background:#7F1D1D;color:#fff}
+.btn-danger:hover{background:#991B1B}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-xs{padding:4px 9px;font-size:11px;font-weight:700}
 
-/* TABLE */
-.tbl-shell{background:var(--black-card);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow)}
+/* ── TABLE ── */
+.tbl-wrap{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden}
 table{width:100%;border-collapse:collapse}
-thead{background:var(--black-soft)}
-th{padding:12px 15px;text-align:left;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);white-space:nowrap}
-td{padding:13px 15px;font-size:13px;border-top:1px solid var(--border);vertical-align:middle}
+thead{background:var(--soft)}
+th{padding:11px 14px;text-align:left;font-size:10px;font-weight:800;
+  text-transform:uppercase;letter-spacing:.1em;color:var(--dim);white-space:nowrap}
+td{padding:12px 14px;font-size:13px;border-top:1px solid var(--line);vertical-align:middle}
 tbody tr{transition:background .12s}
-tbody tr:hover td{background:#222}
-.empty-td{text-align:center;padding:52px!important;color:var(--text-dim);font-style:italic}
-.row-hint{font-size:11px;color:var(--text-dim);margin-top:8px;padding-left:2px}
-td.editable{cursor:pointer;position:relative}
-td.editable:hover{background:#1E1800!important}
-td.editable:hover::after{content:'✎';position:absolute;right:5px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--yellow);opacity:.9}
-.ci{width:100%;padding:4px 8px;border:1.5px solid var(--yellow);border-radius:6px;background:#1A1500;font-family:'Nunito',sans-serif;font-size:13px;color:var(--white);outline:none;box-shadow:0 0 0 3px rgba(245,197,24,.12)}
-.csel{width:100%;padding:4px 6px;border:1.5px solid var(--yellow);border-radius:6px;background:#1A1500;font-family:'Nunito',sans-serif;font-size:13px;color:var(--white);outline:none}
+tbody tr:hover td{background:#1E1E1E}
+.empty-td{text-align:center;padding:50px!important;color:var(--dim);font-style:italic}
+.row-hint{font-size:11px;color:var(--dim);margin-top:8px;padding-left:2px}
 
-/* BADGES */
-.badge{display:inline-flex;align-items:center;padding:3px 11px;border-radius:var(--r-pill);font-size:11px;font-weight:800;letter-spacing:.03em;white-space:nowrap}
-.b-sc{background:rgba(99,102,241,.18);color:#A5B4FC;border:1px solid rgba(99,102,241,.25)}
-.b-i1{background:rgba(245,158,11,.15);color:#FCD34D;border:1px solid rgba(245,158,11,.25)}
-.b-i2{background:rgba(14,165,233,.15);color:#7DD3FC;border:1px solid rgba(14,165,233,.25)}
-.b-of{background:rgba(34,197,94,.15);color:#86EFAC;border:1px solid rgba(34,197,94,.25)}
+/* editable cells in admin mode */
+td.ed{cursor:pointer;position:relative}
+td.ed:hover{background:#1E1600!important}
+td.ed:hover::after{content:'✎';position:absolute;right:5px;top:50%;transform:translateY(-50%);
+  font-size:10px;color:var(--yellow);opacity:.9}
+.ci{width:100%;padding:4px 8px;border:1.5px solid var(--yellow);border-radius:6px;
+  background:#1A1500;font-family:'Nunito',sans-serif;font-size:13px;color:#fff;outline:none}
+.csel{width:100%;padding:4px 6px;border:1.5px solid var(--yellow);border-radius:6px;
+  background:#1A1500;font-family:'Nunito',sans-serif;font-size:13px;color:#fff;outline:none}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:var(--pill);
+  font-size:11px;font-weight:800;white-space:nowrap}
+.b-sc{background:rgba(99,102,241,.2);color:#A5B4FC;border:1px solid rgba(99,102,241,.3)}
+.b-i1{background:rgba(245,158,11,.15);color:#FCD34D;border:1px solid rgba(245,158,11,.3)}
+.b-i2{background:rgba(14,165,233,.15);color:#7DD3FC;border:1px solid rgba(14,165,233,.3)}
+.b-of{background:rgba(34,197,94,.15);color:#86EFAC;border:1px solid rgba(34,197,94,.3)}
 .b-hi{background:rgba(34,197,94,.25);color:#4ADE80;border:1px solid rgba(34,197,94,.4);font-weight:900}
-.b-re{background:rgba(212,43,43,.18);color:#FCA5A5;border:1px solid rgba(212,43,43,.3)}
+.b-re{background:rgba(212,43,43,.2);color:#FCA5A5;border:1px solid rgba(212,43,43,.3)}
 
-/* ADD FORM — DYNAMIC */
-.form-card{background:var(--black-card);border:1px solid var(--border);border-radius:var(--r-lg);padding:36px;max-width:860px;box-shadow:var(--shadow)}
-.fsec-title{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:var(--yellow);border-bottom:1px solid var(--border);padding-bottom:8px;margin:26px 0 16px}
-.fsec-title:first-child{margin-top:0}
-.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+/* ── FORM ── */
+.form-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);
+  padding:32px;max-width:820px}
+.fsec{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;
+  color:var(--yellow);border-bottom:1px solid var(--line);padding-bottom:7px;margin:22px 0 14px}
+.fsec:first-child{margin-top:0}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .fg{display:flex;flex-direction:column;gap:5px}
 .fg.full{grid-column:1/-1}
-.fg label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim)}
-.fg input,.fg select,.fg textarea{
-  padding:11px 14px;border:1px solid var(--border-lt);border-radius:var(--r);
-  background:var(--black-soft);font-family:'Nunito',sans-serif;font-size:13px;color:var(--text-main);
-  outline:none;transition:all .2s;width:100%;
-}
-.fg input::placeholder{color:var(--text-dim)}
-.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--yellow);background:#1A1500;box-shadow:0 0 0 3px rgba(245,197,24,.1)}
-.fg textarea{resize:vertical;min-height:88px}
-.form-foot{margin-top:26px;padding-top:20px;border-top:1px solid var(--border);display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.fg label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--dim)}
+.fg input,.fg select,.fg textarea{padding:10px 13px;border:1px solid var(--line-lt);border-radius:var(--r);
+  background:var(--soft);font-family:'Nunito',sans-serif;font-size:13px;color:var(--text);
+  outline:none;transition:all .2s;width:100%}
+.fg input::placeholder{color:var(--dim)}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--yellow);background:#1A1500;
+  box-shadow:0 0 0 3px rgba(245,197,24,.1)}
+.fg textarea{resize:vertical;min-height:84px}
+.form-foot{margin-top:22px;padding-top:18px;border-top:1px solid var(--line);
+  display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .fm{font-size:13px;font-weight:700}
-.fm.ok{color:var(--success)}.fm.er{color:#F87171}
+.fm.ok{color:var(--green)}.fm.er{color:var(--danger)}
 
-/* MODALS */
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(5px);z-index:800;align-items:center;justify-content:center}
-.overlay.open{display:flex;animation:fo .2s ease}
+/* ── MODALS ── */
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);
+  backdrop-filter:blur(4px);z-index:500;align-items:center;justify-content:center}
+.ov.on{display:flex;animation:fo .2s ease}
 @keyframes fo{from{opacity:0}to{opacity:1}}
-.modal{
-  background:var(--black-card);border:1px solid var(--border-lt);border-top:3px solid var(--red);
-  border-radius:var(--r-lg);padding:36px;width:min(720px,95vw);max-height:90vh;overflow-y:auto;
-  box-shadow:var(--shadow-lg);animation:rise .25s ease;
-}
-.modal-sm{max-width:460px}
-.mh{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}
-.mttl{font-family:'Fredoka One',cursive;font-size:22px;color:var(--white);letter-spacing:.02em}
-.mclose{background:none;border:none;font-size:26px;color:var(--text-dim);cursor:pointer;line-height:1;transition:color .2s}
-.mclose:hover{color:var(--text-main)}
-.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:18px}
+.modal{background:var(--card);border:1px solid var(--line-lt);border-top:3px solid var(--red);
+  border-radius:var(--r-lg);padding:32px;width:min(700px,95vw);max-height:90vh;
+  overflow-y:auto;box-shadow:var(--sh-lg);animation:rise .22s ease}
+.modal-sm{max-width:440px}
+.mh{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
+.mttl{font-family:'Fredoka One',cursive;font-size:21px;color:#fff;letter-spacing:.02em}
+.mclose{background:none;border:none;font-size:24px;color:var(--dim);cursor:pointer;
+  line-height:1;transition:color .2s;padding:0}
+.mclose:hover{color:#fff}
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:16px}
 .df{display:flex;flex-direction:column;gap:3px}
 .df.full{grid-column:1/-1}
-.df-l{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim)}
-.df-v{font-size:14px;color:var(--text-main)}
-.cmt-box{background:var(--black-soft);border:1px solid var(--border-lt);border-radius:var(--r);padding:14px;font-size:13px;color:var(--text-main);min-height:64px;white-space:pre-wrap;line-height:1.6;margin-top:4px}
-.divider{border:none;border-top:1px solid var(--border);margin:18px 0}
-.mfg{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
-.mfg label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim)}
-.mfg input,.mfg select,.mfg textarea{
-  padding:11px 14px;border:1px solid var(--border-lt);border-radius:var(--r);
-  background:var(--black-soft);font-family:'Nunito',sans-serif;font-size:13px;color:var(--text-main);
-  outline:none;transition:all .2s;width:100%;
-}
-.mfg input:focus,.mfg select:focus,.mfg textarea:focus{border-color:var(--yellow);background:#1A1500;box-shadow:0 0 0 3px rgba(245,197,24,.1)}
-.mfg textarea{resize:vertical;min-height:70px}
+.df-l{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--dim)}
+.df-v{font-size:14px;color:var(--text)}
+.cmt-box{background:var(--soft);border:1px solid var(--line-lt);border-radius:var(--r);
+  padding:12px;font-size:13px;color:var(--text);min-height:60px;white-space:pre-wrap;line-height:1.6;margin-top:4px}
+.mdivider{border:none;border-top:1px solid var(--line);margin:16px 0}
+.mfg{display:flex;flex-direction:column;gap:5px;margin-bottom:13px}
+.mfg label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--dim)}
+.mfg input,.mfg select,.mfg textarea{padding:10px 13px;border:1px solid var(--line-lt);
+  border-radius:var(--r);background:var(--soft);font-family:'Nunito',sans-serif;
+  font-size:13px;color:var(--text);outline:none;transition:all .2s;width:100%}
+.mfg input:focus,.mfg select:focus,.mfg textarea:focus{border-color:var(--yellow);background:#1A1500}
+.mfg textarea{resize:vertical;min-height:68px}
 
-/* ══ FORM BUILDER ══════════════════════════════════════════ */
-.builder-layout{display:grid;grid-template-columns:280px 1fr;gap:20px;min-height:600px}
-.builder-sidebar{
-  background:var(--black-card);border:1px solid var(--border);border-radius:var(--r-lg);
-  display:flex;flex-direction:column;overflow:hidden;
-}
-.builder-main{
-  background:var(--black-card);border:1px solid var(--border);border-radius:var(--r-lg);
-  display:flex;flex-direction:column;overflow:hidden;
-}
-.builder-head{
-  padding:14px 18px;background:var(--black-soft);border-bottom:1px solid var(--border);
-  font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);
-  display:flex;align-items:center;justify-content:space-between;
-}
-.builder-body{flex:1;overflow-y:auto;padding:14px}
-
-/* Section list items */
-.sec-item{
-  display:flex;align-items:center;gap:8px;
-  padding:10px 12px;border-radius:var(--r);border:1px solid transparent;
-  cursor:pointer;margin-bottom:6px;transition:all .15s;
-}
-.sec-item:hover{background:var(--black-soft);border-color:var(--border-lt)}
-.sec-item.active{background:rgba(212,43,43,.12);border-color:rgba(212,43,43,.3)}
-.sec-item-name{flex:1;font-size:13px;font-weight:700;color:var(--text-main)}
-.sec-item-count{font-size:11px;color:var(--text-dim);background:var(--black-soft);padding:2px 7px;border-radius:var(--r-pill)}
-.sec-drag{color:var(--text-dim);font-size:14px;cursor:grab;user-select:none}
-.sec-del{
-  background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:14px;padding:2px;
-  border-radius:4px;transition:color .15s;
-}
-.sec-del:hover{color:var(--red)}
-
-/* Field editor */
-.field-row{
-  display:flex;align-items:center;gap:8px;
-  padding:10px 12px;border-radius:var(--r);border:1px solid var(--border-lt);
-  background:var(--black-soft);margin-bottom:8px;
-}
-.field-drag{color:var(--text-dim);font-size:14px;cursor:grab;user-select:none;flex-shrink:0}
-.field-info{flex:1;min-width:0}
-.field-label{font-size:13px;font-weight:700;color:var(--text-main);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.field-type{font-size:11px;color:var(--text-dim);margin-top:2px}
-.field-req{
-  padding:2px 8px;border-radius:var(--r-pill);font-size:10px;font-weight:800;
-  background:rgba(245,197,24,.1);color:var(--yellow);border:1px solid rgba(245,197,24,.2);
-}
-.field-actions{display:flex;gap:5px;flex-shrink:0}
-.ico-btn{
-  background:none;border:1px solid var(--border-lt);border-radius:6px;
-  width:28px;height:28px;display:flex;align-items:center;justify-content:center;
-  font-size:13px;color:var(--text-dim);cursor:pointer;transition:all .15s;
-}
-.ico-btn:hover.edit-ico{border-color:var(--yellow);color:var(--yellow)}
-.ico-btn:hover.del-ico{border-color:var(--red);color:var(--red)}
-
-/* Dropdown options manager */
-.dropdown-manager{
-  background:var(--black-card);border:1px solid var(--border);border-radius:var(--r-lg);
-  overflow:hidden;box-shadow:var(--shadow);
-}
-.dm-tabs{display:flex;background:var(--black-soft);border-bottom:1px solid var(--border);overflow-x:auto}
-.dm-tab{
-  padding:12px 16px;background:none;border:none;
-  font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;
-  text-transform:uppercase;letter-spacing:.07em;
-  color:var(--text-dim);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .2s;
-}
-.dm-tab.active{color:var(--yellow);border-color:var(--yellow)}
-.dm-tab:hover:not(.active){color:var(--text-mid)}
-.dm-body{padding:18px}
-.opt-item{
-  display:flex;align-items:center;gap:8px;
-  padding:9px 12px;background:var(--black-soft);border:1px solid var(--border-lt);
-  border-radius:var(--r);margin-bottom:7px;
-}
-.opt-drag{color:var(--text-dim);font-size:13px;cursor:grab;user-select:none}
-.opt-label{flex:1;font-size:13px;font-weight:600;color:var(--text-main)}
-.opt-default{
-  padding:2px 8px;border-radius:var(--r-pill);font-size:10px;font-weight:800;
-  background:rgba(34,197,94,.1);color:var(--success);border:1px solid rgba(34,197,94,.2);
-}
-.opt-del{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:14px;padding:2px;border-radius:4px;transition:color .15s}
-.opt-del:hover{color:var(--red)}
-.add-opt-row{display:flex;gap:8px;margin-top:10px}
-.add-opt-row input{
-  flex:1;padding:9px 12px;border:1px solid var(--border-lt);border-radius:var(--r);
-  background:var(--black-soft);font-family:'Nunito',sans-serif;font-size:13px;color:var(--text-main);outline:none;
-}
-.add-opt-row input:focus{border-color:var(--yellow);box-shadow:0 0 0 3px rgba(245,197,24,.1)}
-
-/* Dashboard stat builder */
-.stat-builder-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
-.stat-builder-card{
-  background:var(--black-soft);border:2px solid var(--border-lt);border-radius:var(--r-lg);
-  padding:16px;display:flex;flex-direction:column;gap:10px;
-}
-.stat-builder-card.preview-card{
-  border-style:dashed;border-color:rgba(245,197,24,.3);background:rgba(245,197,24,.04);
-}
-.sb-row{display:flex;align-items:center;gap:8px}
-.sb-row label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--text-dim);width:60px;flex-shrink:0}
-.sb-row input,.sb-row select{
-  flex:1;padding:7px 10px;border:1px solid var(--border-lt);border-radius:var(--r);
-  background:var(--black-card);font-family:'Nunito',sans-serif;font-size:12px;color:var(--text-main);outline:none;
-}
-.sb-row input:focus,.sb-row select:focus{border-color:var(--yellow)}
-.stat-preview{
-  border-radius:var(--r);padding:14px 16px;position:relative;overflow:hidden;
-}
-.stat-preview::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
-.sp-lbl{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);margin-bottom:6px}
-.sp-num{font-family:'Fredoka One',cursive;font-size:32px;color:var(--white);line-height:1}
-
-/* LOCK SCREEN */
-.lock-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);backdrop-filter:blur(8px);z-index:900;align-items:center;justify-content:center}
-.lock-overlay.open{display:flex;animation:fo .3s ease}
-.lock-card{
-  background:var(--black-card);border:1px solid var(--border-lt);border-top:4px solid var(--red);
-  border-radius:var(--r-lg);padding:48px 48px 40px;width:min(420px,92vw);text-align:center;
-  box-shadow:0 0 80px rgba(212,43,43,.2),var(--shadow-lg);
-}
-.lock-logo{height:56px;object-fit:contain;margin-bottom:24px;filter:drop-shadow(0 0 10px rgba(212,43,43,.4))}
-.lock-title{font-family:'Fredoka One',cursive;font-size:22px;color:var(--white);letter-spacing:.03em;margin-bottom:6px}
-.lock-sub{font-size:13px;color:var(--text-dim);margin-bottom:28px}
-.lock-inp{
-  width:100%;padding:14px 16px;background:var(--black-soft);border:1.5px solid var(--border-lt);border-radius:var(--r);
-  font-family:'Nunito',sans-serif;font-size:15px;font-weight:700;color:var(--white);letter-spacing:.1em;text-align:center;
-  outline:none;transition:border .2s,box-shadow .2s;margin-bottom:12px;
-}
+/* ── LOCK SCREEN ── */
+.lock-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);
+  z-index:600;align-items:center;justify-content:center}
+.lock-ov.on{display:flex;animation:fo .3s ease}
+.lock-card{background:var(--card);border:1px solid var(--line-lt);border-top:4px solid var(--red);
+  border-radius:var(--r-lg);padding:44px;width:min(400px,92vw);text-align:center;
+  box-shadow:0 0 80px rgba(212,43,43,.2),var(--sh-lg)}
+.lock-logo{height:54px;object-fit:contain;margin-bottom:20px;
+  filter:drop-shadow(0 0 10px rgba(212,43,43,.5))}
+.lock-title{font-family:'Fredoka One',cursive;font-size:22px;color:#fff;margin-bottom:5px}
+.lock-sub{font-size:13px;color:var(--dim);margin-bottom:24px}
+.lock-inp{width:100%;padding:13px 16px;background:var(--soft);border:1.5px solid var(--line-lt);
+  border-radius:var(--r);font-family:'Nunito',sans-serif;font-size:15px;font-weight:700;
+  color:#fff;letter-spacing:.1em;text-align:center;outline:none;
+  transition:border .2s,box-shadow .2s;margin-bottom:10px}
 .lock-inp:focus{border-color:var(--yellow);box-shadow:0 0 0 3px rgba(245,197,24,.15)}
 .lock-inp.shake{animation:shake .38s ease}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-9px)}75%{transform:translateX(9px)}}
-.lock-err{font-size:12px;color:#F87171;font-weight:700;min-height:18px;margin-bottom:10px}
+.lock-err{font-size:12px;color:var(--danger);font-weight:700;min-height:16px;margin-bottom:10px}
 .lock-btns{display:flex;gap:10px}
-.lock-unlock{flex:1;padding:13px;background:var(--red);border:none;border-radius:var(--r);font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;color:#fff;cursor:pointer;transition:all .2s;box-shadow:0 4px 14px rgba(212,43,43,.4)}
-.lock-unlock:hover{background:var(--red-lt)}
-.lock-cancel{padding:13px 20px;background:transparent;border:1px solid var(--border-lt);border-radius:var(--r);font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;color:var(--text-dim);cursor:pointer;transition:all .2s}
-.lock-cancel:hover{color:var(--text-mid)}
+.lock-ok{flex:1;padding:12px;background:var(--red);border:none;border-radius:var(--r);
+  font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;color:#fff;cursor:pointer;
+  transition:all .2s;box-shadow:0 4px 14px rgba(212,43,43,.4)}
+.lock-ok:hover{background:var(--red-lt)}
+.lock-cancel{padding:12px 18px;background:transparent;border:1px solid var(--line-lt);
+  border-radius:var(--r);font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;
+  color:var(--dim);cursor:pointer;transition:all .2s}
+.lock-cancel:hover{color:var(--mid)}
 
-/* TOAST */
-#toast{position:fixed;bottom:22px;right:22px;background:var(--black-card);color:var(--text-main);padding:13px 22px;border-radius:var(--r);font-size:13px;font-weight:700;border-left:4px solid var(--yellow);box-shadow:var(--shadow-lg);opacity:0;pointer-events:none;transition:opacity .3s;z-index:9999;max-width:340px}
+/* ── IMPORT ZONE ── */
+.import-zone{border:2px dashed var(--line-lt);border-radius:var(--r-lg);
+  padding:48px;text-align:center;transition:all .2s;cursor:pointer;margin-bottom:20px}
+.import-zone:hover,.import-zone.drag{border-color:var(--yellow);background:rgba(245,197,24,.04)}
+.import-zone-icon{font-size:40px;margin-bottom:12px}
+.import-zone-txt{font-size:14px;font-weight:600;color:var(--mid);margin-bottom:6px}
+.import-zone-sub{font-size:12px;color:var(--dim)}
+.import-preview{background:var(--soft);border:1px solid var(--line);border-radius:var(--r);
+  overflow:hidden;max-height:300px;overflow-y:auto;margin-bottom:16px}
+.import-preview table{font-size:12px}
+.import-preview th{font-size:10px}
+.import-preview td{padding:8px 12px}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:20px;right:20px;background:var(--card);color:var(--text);
+  padding:12px 20px;border-radius:var(--r);font-size:13px;font-weight:700;
+  border-left:4px solid var(--yellow);box-shadow:var(--sh-lg);
+  opacity:0;pointer-events:none;transition:opacity .3s;z-index:9999;max-width:320px}
 #toast.on{opacity:1}
-#toast.ok{border-color:var(--success)}
-#toast.er{border-color:var(--red)}
+#toast.ok{border-color:var(--green)}
+#toast.er{border-color:var(--danger)}
 
-/* MISC */
-.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--border-lt);border-top-color:var(--yellow);border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle}
+/* ── MISC ── */
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--line-lt);
+  border-top-color:var(--yellow);border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle}
 @keyframes sp{to{transform:rotate(360deg)}}
-.tag-new{display:inline-block;padding:2px 7px;background:rgba(245,197,24,.15);color:var(--yellow);border:1px solid rgba(245,197,24,.25);border-radius:var(--r-pill);font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-left:8px}
-.section-badge{background:rgba(212,43,43,.12);border:1px solid rgba(212,43,43,.25);color:var(--red-lt);padding:3px 10px;border-radius:var(--r-pill);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
-.has-pending::after{content:'•';color:var(--yellow);font-size:16px;margin-left:2px;vertical-align:middle;line-height:1}
-@media(max-width:720px){
-  .site-header,.tab-bar,.page,.admin-bar{padding-left:16px;padding-right:16px}
-  .fgrid,.dgrid,.builder-layout,.stat-builder-grid{grid-template-columns:1fr}
-  .stats-grid{grid-template-columns:1fr 1fr}
-  .form-card,.modal{padding:20px}
-  .ab-hint{display:none}
+.admin-banner{background:rgba(212,43,43,.1);border:1px solid rgba(212,43,43,.25);
+  border-radius:var(--r);padding:10px 14px;margin-bottom:18px;
+  font-size:12px;color:rgba(212,43,43,.85);font-weight:600}
+.del-row-btn{background:#7F1D1D;border:none;color:#fff;border-radius:50%;
+  width:26px;height:26px;cursor:pointer;font-size:13px;line-height:1;
+  display:inline-flex;align-items:center;justify-content:center;
+  transition:background .2s;vertical-align:middle;margin-left:4px;flex-shrink:0}
+.del-row-btn:hover{background:var(--danger)}
+
+@media(max-width:680px){
+  .hdr,.tabs,.page,.admin-bar{padding-left:14px;padding-right:14px}
+  .fgrid,.dgrid{grid-template-columns:1fr}
+  .stats{grid-template-columns:1fr 1fr}
+  .form-card,.modal{padding:18px}
 }
 </style>
 </head>
 <body>
 
 <!-- HEADER -->
-<header class="site-header">
-  <img class="brand-logo" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdC
+<header class="hdr">
+  <img class="logo" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdC
 IFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAA
 AADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlk
 ZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAA
@@ -2289,44 +2154,44 @@ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/2Q==" alt="B'Creamy"/>
-  <div class="header-right">
-    <div class="live-pill"><div class="live-dot"></div><span class="live-txt">Live Sync</span></div>
-    <button class="hdr-btn admin-btn" id="adminBtn" onclick="openLock()">🔒 Admin</button>
+  <div class="hdr-right">
+    <div class="live-pill"><div class="live-dot"></div><span class="live-txt">Live</span></div>
+    <button class="admin-btn" id="adminBtn" onclick="openLock()">🔒 Admin</button>
   </div>
 </header>
 
 <!-- ADMIN BAR -->
 <div class="admin-bar" id="adminBar">
   <span class="ab-lbl">⚙ Admin Mode</span>
-  <span class="ab-hint">Full edit authority · Click cells to edit inline · Use Form Builder for structure changes</span>
-  <button class="ab-builder-btn" onclick="switchTab('builder',document.querySelectorAll('.tab')[3])">🛠 Form Builder</button>
-  <button class="ab-save" onclick="saveAllPending()">💾 Save All Changes</button>
-  <button class="ab-exit" onclick="lockAdmin()">Exit Admin</button>
+  <span class="ab-hint">Click any cell to edit inline · ✎ Edit for full record · ✕ to delete row</span>
+  <button class="btn btn-ghost btn-sm" onclick="switchTab('import',qS('.tab[data-t=import]'))">📥 Import Excel</button>
+  <button class="btn btn-green btn-sm" onclick="exportExcel()">📤 Export Excel</button>
+  <button class="btn btn-red btn-sm" onclick="lockAdmin()">Exit Admin</button>
 </div>
 
 <!-- TABS -->
-<nav class="tab-bar">
-  <button class="tab active" onclick="switchTab('dashboard',this)">Dashboard</button>
-  <button class="tab" onclick="switchTab('candidates',this)">Candidates</button>
-  <button class="tab" onclick="switchTab('add',this)">Add Candidate</button>
-  <button class="tab" id="builderTab" onclick="switchTab('builder',this)" style="display:none">🛠 Form Builder</button>
+<nav class="tabs">
+  <button class="tab on" data-t="dashboard" onclick="switchTab('dashboard',this)">Dashboard</button>
+  <button class="tab" data-t="candidates" onclick="switchTab('candidates',this)">Candidates</button>
+  <button class="tab" data-t="add" onclick="switchTab('add',this)">Add Candidate</button>
+  <button class="tab" data-t="import" onclick="switchTab('import',this)" id="importTab" style="display:none">📥 Import Excel</button>
 </nav>
 
 <div class="page">
 
   <!-- DASHBOARD -->
-  <div class="panel active" id="panel-dashboard">
+  <div class="panel on" id="panel-dashboard">
     <div class="pg-title">Recruitment Overview</div>
-    <div class="pg-sub">Live pipeline · auto-refreshes on each visit</div>
-    <div class="stats-grid" id="statsGrid"></div>
+    <div class="pg-sub">Live pipeline · refreshes on each visit</div>
+    <div class="stats" id="statsGrid"></div>
     <div class="pipe-card">
-      <div class="pipe-lbl">Candidate Pipeline</div>
-      <div class="pipe-track" id="plTrack"><div class="ps" style="background:var(--border);flex:1">Loading…</div></div>
+      <div class="pipe-lbl">Pipeline</div>
+      <div class="pipe-track" id="plTrack"></div>
       <div class="pipe-leg" id="plLeg"></div>
     </div>
     <div class="pipe-card" style="margin-top:0">
       <div class="pipe-lbl">Recently Added</div>
-      <div id="recentList"><span style="color:var(--text-dim);font-style:italic;font-size:13px">No data yet.</span></div>
+      <div id="recentList"><span style="color:var(--dim);font-style:italic;font-size:13px">Loading…</span></div>
     </div>
   </div>
 
@@ -2334,29 +2199,60 @@ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/2Q==" al
   <div class="panel" id="panel-candidates">
     <div class="toolbar">
       <div class="srch">
-        <svg width="15" height="15" fill="none" stroke="var(--text-dim)" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <svg width="14" height="14" fill="none" stroke="var(--dim)" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         <input type="text" id="searchQ" placeholder="Search name, position, recruiter…" oninput="doFilter()"/>
       </div>
-      <select class="fsel" id="fStage" onchange="doFilter()"><option value="">All Stages</option></select>
+      <select class="fsel" id="fStage" onchange="doFilter()">
+        <option value="">All Stages</option>
+        <option>Screening</option><option>Interview 1</option><option>Interview 2</option>
+        <option>Offered</option><option>Hired</option><option>Rejected</option>
+      </select>
       <select class="fsel" id="fPos" onchange="doFilter()"><option value="">All Positions</option></select>
-      <button class="btn btn-ghost btn-sm" onclick="loadData()">↻ Refresh</button>
-      <button class="btn btn-red btn-sm" onclick="switchTab('add',document.querySelectorAll('.tab')[2])">+ Add New</button>
+      <button class="btn btn-ghost btn-sm" onclick="loadAll()">↻ Refresh</button>
+      <button class="btn btn-red btn-sm" onclick="switchTab('add',qS('.tab[data-t=add]'))">+ Add New</button>
+      <button class="btn btn-green btn-sm" onclick="exportExcel()">📤 Export</button>
     </div>
-    <div class="tbl-shell">
+    <div class="tbl-wrap">
       <table>
-        <thead><tr id="tableHead"></tr></thead>
-        <tbody id="tBody"><tr><td colspan="99" class="empty-td"><span class="spin"></span> Loading…</td></tr></tbody>
+        <thead><tr>
+          <th>#</th><th>Name</th><th>Position</th><th>Source</th><th>Stage</th>
+          <th>Recruiter</th><th>Applied</th><th>Comments</th><th>Actions</th>
+        </tr></thead>
+        <tbody id="tBody"><tr><td colspan="9" class="empty-td"><span class="spin"></span> Loading…</td></tr></tbody>
       </table>
     </div>
     <div class="row-hint" id="rowHint"></div>
   </div>
 
-  <!-- ADD CANDIDATE (dynamic) -->
+  <!-- ADD CANDIDATE -->
   <div class="panel" id="panel-add">
     <div class="pg-title">Add New Candidate</div>
-    <div class="pg-sub">Saves to Google Sheets · visible to the whole team instantly</div>
+    <div class="pg-sub">Saves directly to Google Sheets</div>
     <div class="form-card">
-      <div id="dynamicForm"></div>
+      <div class="fsec">Personal Information</div>
+      <div class="fgrid">
+        <div class="fg"><label>Full Name *</label><input type="text" id="aN" placeholder="e.g. Priya Sharma"/></div>
+        <div class="fg"><label>Email</label><input type="email" id="aE" placeholder="priya@example.com"/></div>
+        <div class="fg"><label>Phone</label><input type="text" id="aPh" placeholder="+91 98765 43210"/></div>
+        <div class="fg"><label>Application Date</label><input type="date" id="aDt"/></div>
+      </div>
+      <div class="fsec">Role Details</div>
+      <div class="fgrid">
+        <div class="fg"><label>Position Applied For *</label><input type="text" id="aPo" placeholder="e.g. Production Manager"/></div>
+        <div class="fg"><label>Source</label>
+          <select id="aSr"><option>LinkedIn</option><option>Naukri</option><option>Referral</option>
+            <option>Walk-in</option><option>Job Fair</option><option>Indeed</option><option>Other</option></select></div>
+        <div class="fg"><label>Current Stage</label>
+          <select id="aSt"><option>Screening</option><option>Interview 1</option><option>Interview 2</option>
+            <option>Offered</option><option>Hired</option><option>Rejected</option></select></div>
+        <div class="fg"><label>Recruiter *</label><input type="text" id="aRe" placeholder="Your name"/></div>
+      </div>
+      <div class="fsec">Feedback</div>
+      <div class="fgrid">
+        <div class="fg full"><label>Comments / Notes</label>
+          <textarea id="aCo" placeholder="Feedback, observations, next steps…"></textarea></div>
+      </div>
       <div class="form-foot">
         <button class="btn btn-red" id="submitBtn" onclick="submitCandidate()">Save Candidate</button>
         <button class="btn btn-ghost" onclick="clearAdd()">Clear</button>
@@ -2365,73 +2261,36 @@ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/2Q==" al
     </div>
   </div>
 
-  <!-- FORM BUILDER (admin only) -->
-  <div class="panel" id="panel-builder">
-    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
-      <div>
-        <div class="pg-title">Form Builder <span class="tag-new">Admin</span></div>
-        <div class="pg-sub" style="margin-bottom:0">Design the Add Candidate form · manage dropdowns · configure dashboard stats</div>
-      </div>
-      <div style="margin-left:auto;display:flex;gap:10px">
-        <button class="btn btn-ghost btn-sm" onclick="previewForm()">👁 Preview Form</button>
-        <button class="btn btn-yellow btn-sm" onclick="saveSchema()">💾 Save to Sheets</button>
-        <button class="btn btn-ghost-red btn-sm" onclick="resetSchema()">↺ Reset to Default</button>
-      </div>
+  <!-- IMPORT EXCEL -->
+  <div class="panel" id="panel-import">
+    <div class="pg-title">Import from Excel</div>
+    <div class="pg-sub">Upload an .xlsx file to bulk-import candidates · <a href="#" onclick="downloadSample();return false" style="color:var(--yellow);text-decoration:none;font-weight:700">📥 Download Sample Template</a></div>
+    <div class="import-zone" id="importZone"
+      onclick="qS('#xlFile').click()"
+      ondragover="event.preventDefault();this.classList.add('drag')"
+      ondragleave="this.classList.remove('drag')"
+      ondrop="handleDrop(event)">
+      <input type="file" id="xlFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleFile(this.files[0])"/>
+      <div class="import-zone-icon">📊</div>
+      <div class="import-zone-txt">Click to browse or drag & drop your Excel file here</div>
+      <div class="import-zone-sub">Supports .xlsx · .xls · .csv · Max 500 rows</div>
     </div>
-
-    <!-- Dropdown Manager -->
-    <div style="margin-bottom:22px">
-      <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);margin-bottom:12px">
-        Dropdown Options Manager
-      </div>
-      <div class="dropdown-manager">
-        <div class="dm-tabs" id="dmTabs"></div>
-        <div class="dm-body" id="dmBody"></div>
-      </div>
-    </div>
-
-    <!-- Form Sections -->
-    <div class="builder-layout" id="builderLayout">
-      <div>
-        <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);margin-bottom:10px">Form Sections</div>
-        <div class="builder-sidebar">
-          <div class="builder-head">
-            Sections
-            <button class="btn btn-xs btn-red" onclick="addSection()">+ Add</button>
-          </div>
-          <div class="builder-body" id="sectionList"></div>
+    <div id="importPreview" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+        <div style="font-size:13px;font-weight:700;color:var(--text)" id="importSummary"></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="cancelImport()">✕ Cancel</button>
+          <button class="btn btn-yellow" id="importBtn" onclick="confirmImport()">✓ Import All Candidates</button>
         </div>
       </div>
-      <div>
-        <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);margin-bottom:10px">Fields in Selected Section</div>
-        <div class="builder-main">
-          <div class="builder-head" id="fieldEditorHead">
-            Select a section ←
-            <span id="addFieldBtn" style="display:none">
-              <button class="btn btn-xs btn-yellow" onclick="addField()">+ Add Field</button>
-            </span>
-          </div>
-          <div class="builder-body" id="fieldList">
-            <div style="text-align:center;padding:40px;color:var(--text-dim);font-style:italic;font-size:13px">Select a section from the left to edit its fields</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Dashboard Stats Builder -->
-    <div style="margin-top:22px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-        <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim)">Dashboard Stat Cards</div>
-        <button class="btn btn-xs btn-red" onclick="addStatCard()">+ Add Stat Card</button>
-      </div>
-      <div class="stat-builder-grid" id="statBuilderGrid"></div>
+      <div class="import-preview" id="importTable"></div>
     </div>
   </div>
 
 </div><!-- /page -->
 
 <!-- LOCK SCREEN -->
-<div class="lock-overlay" id="lockOv">
+<div class="lock-ov" id="lockOv">
   <div class="lock-card">
     <img class="lock-logo" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdC
 IFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAA
@@ -4310,128 +4169,55 @@ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/2Q==" alt="B'Creamy"/>
     <div class="lock-title">Admin Access</div>
-    <div class="lock-sub">Enter the admin password to unlock full editing authority.</div>
-    <input type="password" class="lock-inp" id="lockInp" placeholder="Enter password" autocomplete="off" onkeydown="if(event.key==='Enter')tryUnlock()"/>
+    <div class="lock-sub">Enter the admin password to continue.</div>
+    <input type="password" class="lock-inp" id="lockInp" placeholder="Password"
+      autocomplete="off" onkeydown="if(event.key==='Enter')tryUnlock()"/>
     <div class="lock-err" id="lockErr"></div>
     <div class="lock-btns">
-      <button class="lock-unlock" onclick="tryUnlock()">Unlock</button>
+      <button class="lock-ok" onclick="tryUnlock()">Unlock</button>
       <button class="lock-cancel" onclick="closeLock()">Cancel</button>
     </div>
   </div>
 </div>
 
-<!-- DETAIL MODAL -->
-<div class="overlay" id="detailOv" onclick="if(event.target===this)closeDetail()">
+<!-- VIEW MODAL -->
+<div class="ov" id="viewOv" onclick="if(event.target===this)closeView()">
   <div class="modal">
-    <div class="mh"><div class="mttl" id="dName">Candidate</div><button class="mclose" onclick="closeDetail()">×</button></div>
-    <div class="dgrid" id="dGrid"></div>
-    <hr class="divider"/>
+    <div class="mh"><div class="mttl" id="vName">Candidate</div><button class="mclose" onclick="closeView()">×</button></div>
+    <div class="dgrid" id="vGrid"></div>
+    <hr class="mdivider"/>
     <div class="df-l">Comments / Feedback</div>
-    <div class="cmt-box" id="dCmt">—</div>
-    <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap" id="dActs"></div>
+    <div class="cmt-box" id="vCmt">—</div>
+    <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap" id="vActs"></div>
   </div>
 </div>
 
-<!-- QUICK UPDATE MODAL -->
-<div class="overlay" id="editOv" onclick="if(event.target===this)closeEdit()">
-  <div class="modal modal-sm">
-    <div class="mh"><div class="mttl">Update Candidate</div><button class="mclose" onclick="closeEdit()">×</button></div>
-    <div id="quickEditFields"></div>
-    <div style="display:flex;gap:10px;margin-top:18px">
-      <button class="btn btn-red" onclick="saveEdit()">Save Changes</button>
-      <button class="btn btn-ghost" onclick="closeEdit()">Cancel</button>
-    </div>
-  </div>
-</div>
-
-<!-- ADMIN FULL EDIT MODAL -->
-<div class="overlay" id="adminOv" onclick="if(event.target===this)closeAdminEdit()">
+<!-- EDIT MODAL (admin full edit) -->
+<div class="ov" id="editOv" onclick="if(event.target===this)closeEdit()">
   <div class="modal">
-    <div class="mh"><div class="mttl">✎ Edit Full Record</div><button class="mclose" onclick="closeAdminEdit()">×</button></div>
-    <div style="background:rgba(212,43,43,.08);border:1px solid rgba(212,43,43,.2);border-radius:var(--r);padding:10px 14px;margin-bottom:20px;font-size:12px;color:rgba(212,43,43,.8);font-weight:600">
-      ⚙ Admin — all fields editable · changes sync to Google Sheets on save
-    </div>
-    <div id="adminEditGrid"></div>
-    <div style="margin-top:22px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-      <button class="btn btn-yellow" onclick="saveAdminEdit()">✓ Save All Fields</button>
-      <button class="btn-ghost-red btn btn-sm" onclick="deleteRecord()">✕ Delete Record</button>
-      <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="closeAdminEdit()">Cancel</button>
+    <div class="mh"><div class="mttl">✎ Edit Candidate</div><button class="mclose" onclick="closeEdit()">×</button></div>
+    <div class="admin-banner">⚙ Admin — all fields editable · saves directly to Google Sheets</div>
+    <div class="fgrid" id="editGrid"></div>
+    <div style="margin-top:20px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-yellow" onclick="saveEdit()">✓ Save Changes</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteFromEdit()">✕ Delete This Candidate</button>
+      <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="closeEdit()">Cancel</button>
     </div>
   </div>
 </div>
 
-<!-- ADD SECTION MODAL -->
-<div class="overlay" id="addSecOv" onclick="if(event.target===this)closeAddSec()">
+<!-- QUICK UPDATE MODAL (non-admin) -->
+<div class="ov" id="updateOv" onclick="if(event.target===this)closeUpdate()">
   <div class="modal modal-sm">
-    <div class="mh"><div class="mttl">Add New Section</div><button class="mclose" onclick="closeAddSec()">×</button></div>
-    <div class="mfg"><label>Section Title</label><input type="text" id="newSecName" placeholder="e.g. Experience, References…"/></div>
-    <div style="display:flex;gap:10px;margin-top:16px">
-      <button class="btn btn-yellow" onclick="confirmAddSection()">Add Section</button>
-      <button class="btn btn-ghost" onclick="closeAddSec()">Cancel</button>
-    </div>
-  </div>
-</div>
-
-<!-- ADD / EDIT FIELD MODAL -->
-<div class="overlay" id="fieldOv" onclick="if(event.target===this)closeFieldModal()">
-  <div class="modal modal-sm">
-    <div class="mh"><div class="mttl" id="fieldModalTitle">Add Field</div><button class="mclose" onclick="closeFieldModal()">×</button></div>
-    <div class="mfg"><label>Field Label *</label><input type="text" id="fld_label" placeholder="e.g. Years of Experience"/></div>
-    <div class="mfg"><label>Field Type</label>
-      <select id="fld_type" onchange="onFieldTypeChange()">
-        <option value="text">Text Input</option>
-        <option value="email">Email Input</option>
-        <option value="tel">Phone Input</option>
-        <option value="number">Number Input</option>
-        <option value="date">Date Picker</option>
-        <option value="select">Dropdown</option>
-        <option value="textarea">Text Area (Multi-line)</option>
-      </select>
-    </div>
-    <div class="mfg" id="fld_key_row"><label>Field Key (auto)</label><input type="text" id="fld_key" placeholder="e.g. yearsExperience" style="font-family:monospace"/></div>
-    <div class="mfg" id="fld_opts_row" style="display:none">
-      <label>Dropdown Options (one per line)</label>
-      <textarea id="fld_opts" placeholder="Option 1&#10;Option 2&#10;Option 3" style="min-height:100px"></textarea>
-    </div>
-    <div class="mfg" style="flex-direction:row;align-items:center;gap:10px">
-      <input type="checkbox" id="fld_req" style="width:auto;margin:0"/>
-      <label for="fld_req" style="font-size:13px;text-transform:none;letter-spacing:0;color:var(--text-main);cursor:pointer">Required field</label>
-    </div>
-    <div class="mfg" style="flex-direction:row;align-items:center;gap:10px">
-      <input type="checkbox" id="fld_full" style="width:auto;margin:0"/>
-      <label for="fld_full" style="font-size:13px;text-transform:none;letter-spacing:0;color:var(--text-main);cursor:pointer">Full width</label>
-    </div>
-    <div style="display:flex;gap:10px;margin-top:16px">
-      <button class="btn btn-yellow" onclick="confirmField()">Save Field</button>
-      <button class="btn btn-ghost" onclick="closeFieldModal()">Cancel</button>
-    </div>
-  </div>
-</div>
-
-<!-- ADD STAT MODAL -->
-<div class="overlay" id="addStatOv" onclick="if(event.target===this)closeAddStat()">
-  <div class="modal modal-sm">
-    <div class="mh"><div class="mttl">Add Dashboard Stat</div><button class="mclose" onclick="closeAddStat()">×</button></div>
-    <div class="mfg"><label>Label</label><input type="text" id="ns_label" placeholder="e.g. On Hold"/></div>
-    <div class="mfg"><label>Counts Stage</label>
-      <select id="ns_stage">
-        <option value="">— Select a stage —</option>
-      </select>
-    </div>
-    <div class="mfg"><label>Hint Text</label><input type="text" id="ns_hint" placeholder="e.g. Waiting for response"/></div>
-    <div class="mfg"><label>Accent Color</label>
-      <select id="ns_color">
-        <option value="red-yellow">Red → Yellow (default)</option>
-        <option value="orange">Orange</option>
-        <option value="green">Green</option>
-        <option value="blue">Blue</option>
-        <option value="purple">Purple</option>
-        <option value="red">Red</option>
-      </select>
-    </div>
-    <div style="display:flex;gap:10px;margin-top:16px">
-      <button class="btn btn-yellow" onclick="confirmAddStat()">Add Card</button>
-      <button class="btn btn-ghost" onclick="closeAddStat()">Cancel</button>
+    <div class="mh"><div class="mttl">Update Status</div><button class="mclose" onclick="closeUpdate()">×</button></div>
+    <div class="mfg"><label>Stage</label>
+      <select id="uStage"><option>Screening</option><option>Interview 1</option><option>Interview 2</option>
+        <option>Offered</option><option>Hired</option><option>Rejected</option></select></div>
+    <div class="mfg"><label>Recruiter</label><input type="text" id="uRec"/></div>
+    <div class="mfg"><label>Add Comment</label><textarea id="uCmt" placeholder="Append a note…"></textarea></div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-red" onclick="saveUpdate()">Save</button>
+      <button class="btn btn-ghost" onclick="closeUpdate()">Cancel</button>
     </div>
   </div>
 </div>
@@ -4440,863 +4226,486 @@ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/2Q==" al
 
 <script>
 // ═══════════════════════════════════════════════════════════
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyxFWIknHTXw-K3XX6lHzr9PHypqxDXtcHn7K0Sp4bNpNb2YqURhkvERxAfTd4ocDf6Tg/exec';
+//  CONFIG  ← paste your Apps Script URL here
+// ═══════════════════════════════════════════════════════════
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx7_3ltI0WM_PGU8AadnDhq2Ba_1gYq18Agxg4ES4ue0xBsUx56ZKPPlmiV3cpGOKW6_g/exec';
 const ADMIN_PASS = 'bcreamy2026';
 
-// ═══ DEFAULT SCHEMA ═════════════════════════════════════════
-const DEFAULT_SCHEMA = {
-  dropdowns: {
-    stage:     { label:'Stage',     options:['Screening','Interview 1','Interview 2','Offered','Hired','Rejected'] },
-    source:    { label:'Source',    options:['LinkedIn','Naukri','Referral','Walk-in','Job Fair','Indeed','Other'] },
-    position:  { label:'Position',  options:['Production Manager','Sales Executive','HR Executive','Delivery Staff','Store Manager','Other'] },
-    recruiter: { label:'Recruiter', options:['HR Team'] },
-  },
-  sections: [
-    { id:'sec_personal', title:'Personal Information', fields:[
-      { id:'f_name',      label:'Full Name',       type:'text',     key:'name',      required:true,  full:false },
-      { id:'f_email',     label:'Email',           type:'email',    key:'email',     required:false, full:false },
-      { id:'f_phone',     label:'Phone',           type:'tel',      key:'phone',     required:false, full:false },
-      { id:'f_date',      label:'Application Date',type:'date',     key:'date',      required:false, full:false },
-    ]},
-    { id:'sec_role', title:'Role & Pipeline', fields:[
-      { id:'f_position',  label:'Position Applied',type:'select',   key:'position',  required:true,  full:false, optionsKey:'position' },
-      { id:'f_source',    label:'Source',          type:'select',   key:'source',    required:false, full:false, optionsKey:'source' },
-      { id:'f_stage',     label:'Current Stage',   type:'select',   key:'stage',     required:false, full:false, optionsKey:'stage' },
-      { id:'f_recruiter', label:'Recruiter',       type:'select',   key:'recruiter', required:true,  full:false, optionsKey:'recruiter' },
-    ]},
-    { id:'sec_feedback', title:'Feedback', fields:[
-      { id:'f_comments',  label:'Comments / Notes', type:'textarea', key:'comments',  required:false, full:true },
-    ]},
-  ],
-  statCards: [
-    { id:'sc_total',   label:'Total Applications', stage:'__all__',    hint:'All candidates',        color:'red-yellow' },
-    { id:'sc_active',  label:'In Progress',        stage:'__active__', hint:'Screening + Interviews', color:'orange' },
-    { id:'sc_offer',   label:'Offers Made',        stage:'Offered',    hint:'Awaiting response',      color:'green' },
-    { id:'sc_hired',   label:'Hired',              stage:'Hired',      hint:'Positions filled',       color:'blue' },
-    { id:'sc_reject',  label:'Rejected',           stage:'Rejected',   hint:'This cycle',             color:'red' },
-  ],
-};
+// ═══ HELPERS ════════════════════════════════════════════════
+const qS = s => document.querySelector(s);
+const qA = s => document.querySelectorAll(s);
+function x(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function bc(s){ return {Screening:'b-sc','Interview 1':'b-i1','Interview 2':'b-i2',Offered:'b-of',Hired:'b-hi',Rejected:'b-re'}[s]||'b-sc'; }
+let _t;
+function toast(msg,type=''){
+  clearTimeout(_t);const el=qS('#toast');
+  el.textContent=msg;el.className='on'+(type?' '+type:'');
+  _t=setTimeout(()=>el.className='',3400);
+}
 
 // ═══ STATE ══════════════════════════════════════════════════
-let candidates=[], filtered=[], editIdx=null, adminIdx=null, adminMode=false, pending={};
-let schema = JSON.parse(JSON.stringify(DEFAULT_SCHEMA));
-let activeSectionId = null;
-let editingFieldIdx = null;
-let activeDmTab = null;
-
-// ═══ SCHEMA SYNC ═════════════════════════════════════════════
-// ── HOW SCHEMA SYNC WORKS ────────────────────────────────────
-// fetch() POST with mode:'no-cors' drops the JSON body silently.
-// But 'application/x-www-form-urlencoded' IS allowed with no-cors
-// and Apps Script receives it via e.postData.contents perfectly.
-// So we POST the schema as a URL-encoded form body — it works.
-// Reading (GET) has no CORS issues at all.
-
-async function loadSchema(){
-  try{
-    const r = await fetch(SCRIPT_URL + '?action=getSchema', {cache:'no-store'});
-    const d = await r.json();
-    if(d.success && d.schema && d.schema !== 'null'){
-      schema = JSON.parse(d.schema);
-      localStorage.setItem('bcreamy_schema', d.schema);
-      return;
-    }
-  }catch(e){}
-  // Fallback: local cache
-  try{
-    const saved = localStorage.getItem('bcreamy_schema');
-    if(saved) schema = JSON.parse(saved);
-  }catch(e){}
-}
-
-function saveSchemaLocal(){
-  localStorage.setItem('bcreamy_schema', JSON.stringify(schema));
-}
-
-// POST schema as URL-encoded form — this bypasses the no-cors body-drop bug.
-// Apps Script reads it via e.postData.contents just fine.
-async function pushSchemaToSheets(){
-  try{
-    const body = 'action=saveSchema&schema=' +
-                 encodeURIComponent(JSON.stringify(schema));
-    await fetch(SCRIPT_URL, {
-      method  : 'POST',
-      mode    : 'no-cors',
-      headers : { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body    : body
-    });
-    // no-cors = opaque response, we can't read it — but it works.
-    // Verify by checking getSchema on next load.
-    return true;
-  }catch(e){ return false; }
-}
-
-// Every builder action calls this — saves locally + pushes to Sheets
-function saveAndSync(){
-  saveSchemaLocal();
-  pushSchemaToSheets(); // fire-and-forget; team sees changes on reload
-}
-
-// Central POST helper — uses form-encoding so no-cors doesn't drop the body
-async function postToSheets(payload) {
-  try {
-    await fetch(SCRIPT_URL, {
-      method : 'POST',
-      mode   : 'no-cors',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body   : 'data=' + encodeURIComponent(JSON.stringify(payload))
-    });
-    return true;
-  } catch(e) { console.error('postToSheets:', e); return false; }
-}
+let candidates=[], filtered=[], editIdx=null, updateIdx=null;
+let adminMode=false, pending={};
+let importRows=[];
 
 // ═══ TABS ════════════════════════════════════════════════════
-function switchTab(n,btn){
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
-  document.getElementById('panel-'+n).classList.add('active');
-  btn.classList.add('active');
-  if(n==='dashboard'){renderDash();}
-  if(n==='candidates'){loadData();}
-  if(n==='add'){renderDynamicForm();}
-  if(n==='builder'){renderBuilder();}
+function switchTab(name,btn){
+  qA('.panel').forEach(p=>p.classList.remove('on'));
+  qA('.tab').forEach(b=>b.classList.remove('on'));
+  qS('#panel-'+name).classList.add('on');
+  btn.classList.add('on');
+  if(name==='dashboard') renderDash();
+  if(name==='candidates') renderTable(filtered.length||qS('#searchQ').value?filtered:candidates);
 }
 
-// ═══ LOCK/UNLOCK ═════════════════════════════════════════════
+// ═══ LOCK / UNLOCK ══════════════════════════════════════════
 function openLock(){
   if(adminMode){lockAdmin();return;}
-  document.getElementById('lockInp').value='';
-  document.getElementById('lockErr').textContent='';
-  document.getElementById('lockOv').classList.add('open');
-  setTimeout(()=>document.getElementById('lockInp').focus(),80);
+  qS('#lockInp').value='';qS('#lockErr').textContent='';
+  qS('#lockOv').classList.add('on');
+  setTimeout(()=>qS('#lockInp').focus(),80);
 }
-function closeLock(){document.getElementById('lockOv').classList.remove('open');}
+function closeLock(){qS('#lockOv').classList.remove('on');}
 function tryUnlock(){
-  const pw=document.getElementById('lockInp').value;
-  if(pw===ADMIN_PASS){
-    closeLock(); adminMode=true;
-    document.body.classList.add('admin-on');
-    const btn=document.getElementById('adminBtn');
-    btn.textContent='🔓 Admin'; btn.classList.add('unlocked');
-    document.getElementById('adminBar').classList.add('on');
-    document.getElementById('builderTab').style.display='';
-    renderTable(filtered.length?filtered:candidates);
-    renderDash();
-    showToast('🔓 Admin unlocked — full edit authority granted','ok');
+  if(qS('#lockInp').value===ADMIN_PASS){
+    closeLock();adminMode=true;
+    qS('#adminBtn').textContent='🔓 Admin';qS('#adminBtn').classList.add('on');
+    qS('#adminBar').classList.add('on');
+    qS('#importTab').style.display='';
+    renderTable(filtered.length||qS('#searchQ').value?filtered:candidates);
+    toast('🔓 Admin unlocked — full edit authority granted','ok');
   } else {
-    const inp=document.getElementById('lockInp');
-    document.getElementById('lockErr').textContent='Incorrect password. Try again.';
-    inp.classList.add('shake'); inp.value='';
-    setTimeout(()=>inp.classList.remove('shake'),420);
-    inp.focus();
+    qS('#lockErr').textContent='Incorrect password.';
+    const i=qS('#lockInp');i.classList.add('shake');i.value='';
+    setTimeout(()=>i.classList.remove('shake'),420);i.focus();
   }
 }
 function lockAdmin(){
-  adminMode=false; pending={};
-  document.body.classList.remove('admin-on');
-  const btn=document.getElementById('adminBtn');
-  btn.textContent='🔒 Admin'; btn.classList.remove('unlocked');
-  document.getElementById('adminBar').classList.remove('on');
-  document.getElementById('builderTab').style.display='none';
-  renderTable(filtered.length?filtered:candidates);
-  renderDash();
-  showToast('Admin mode locked','');
+  adminMode=false;pending={};
+  qS('#adminBtn').textContent='🔒 Admin';qS('#adminBtn').classList.remove('on');
+  qS('#adminBar').classList.remove('on');
+  qS('#importTab').style.display='none';
+  renderTable(filtered.length||qS('#searchQ').value?filtered:candidates);
+  toast('Admin locked','');
 }
 
-// ═══ DATA ════════════════════════════════════════════════════
-// normKey: converts any Sheets column header → lowercase camelCase key
-// so "Full Name" → "name", "Application Date" → "date", etc.
-// This ensures c[f.key] always finds the right value regardless of
-// how the column header was written in Google Sheets.
-function normKey(header) {
-  // Direct known mappings from default schema
-  const MAP = {
-    'rowid':'rowId', 'row id':'rowId', 'row_id':'rowId',
-    'name':'name', 'full name':'name', 'fullname':'name', 'candidate name':'name',
-    'email':'email', 'email address':'email',
-    'phone':'phone', 'phone number':'phone', 'mobile':'phone', 'contact':'phone',
-    'date':'date', 'application date':'date', 'applied date':'date', 'applied on':'date',
-    'position':'position', 'position applied':'position', 'position applied for':'position',
-    'role':'position', 'job title':'position',
-    'source':'source',
-    'stage':'stage', 'current stage':'stage', 'status':'stage',
-    'recruiter':'recruiter', 'assigned recruiter':'recruiter', 'hr':'recruiter',
-    'comments':'comments', 'notes':'comments', 'comments / notes':'comments',
-    'feedback':'comments', 'interviewer notes':'comments',
-    'updatedat':'updatedAt', 'updated at':'updatedAt', 'last updated':'updatedAt',
-  };
-  const lower = String(header).trim().toLowerCase();
-  return MAP[lower] || lower.replace(/[^a-z0-9]+(.)/g, (_,c) => c.toUpperCase());
-}
-
-// normalise a raw candidate object from Sheets so keys match schema
-function normaliseCandidate(raw) {
-  const out = {};
-  Object.keys(raw).forEach(k => {
-    out[normKey(k)] = raw[k];  // normalised key  e.g. "Full Name" → "name"
-    out[k]          = raw[k];  // keep original too
+// ═══ CORE DATA API ═══════════════════════════════════════════
+// Single function to POST to Apps Script via form-encoding.
+// This is the ONLY approach that works with fetch + no-cors:
+// application/x-www-form-urlencoded delivers the body intact.
+async function api(payload){
+  const body='data='+encodeURIComponent(JSON.stringify(payload));
+  await fetch(SCRIPT_URL,{
+    method:'POST',mode:'no-cors',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body
   });
-  // rowId MUST survive normalisation — it is the primary key for all writes
-  // normKey maps 'rowId','row id','Row ID' etc. → 'rowId', so out.rowId is set.
-  // Double-check with common variants just in case.
-  if (!out.rowId) {
-    out.rowId = raw.rowId || raw['Row ID'] || raw['row_id'] || raw['ID'] || '';
-  }
-  return out;
 }
 
-async function loadData(){
-  const tb=document.getElementById('tBody');
-  tb.innerHTML='<tr><td colspan="99" class="empty-td"><span class="spin"></span> Fetching…</td></tr>';
+// ═══ LOAD DATA ═══════════════════════════════════════════════
+async function loadAll(){
+  qS('#tBody').innerHTML='<tr><td colspan="9" class="empty-td"><span class="spin"></span> Loading…</td></tr>';
   try{
-    const r=await fetch(`${SCRIPT_URL}?action=getCandidates`);
+    const r=await fetch(SCRIPT_URL+'?action=getCandidates',{cache:'no-store'});
     const d=await r.json();
-    // Normalise all candidate keys so schema f.key always resolves correctly
-    candidates=(d.candidates||[]).map(normaliseCandidate).reverse();
+    if(!d.success) throw new Error(d.error||'Unknown error');
+    // Candidates come back with normalised keys (rowId, name, email…)
+    // Newest first
+    candidates=[...( d.candidates||[])].reverse();
     filtered=[...candidates];
-    buildFilterDropdowns();
+    buildPosFilter();
     renderTable(candidates);
     renderDash();
-    renderDynamicForm();
-  }catch(e){
-    tb.innerHTML='<tr><td colspan="99" class="empty-td">⚠ Cannot reach backend. Check SCRIPT_URL.</td></tr>';
-    console.error('loadData error:', e);
+  } catch(e){
+    qS('#tBody').innerHTML='<tr><td colspan="9" class="empty-td">⚠ Cannot reach backend. Check SCRIPT_URL.</td></tr>';
+    console.error(e);
   }
 }
 
-// ═══ DYNAMIC TABLE (driven by schema fields) ═════════════════
-function allFields(){
-  return schema.sections.flatMap(s=>s.fields);
-}
-function coreFields(){
-  // Always show these columns + any custom fields
-  return allFields();
-}
-
-function renderTableHead(){
-  const th=document.getElementById('tableHead');
-  const cols=['#',...schema.sections.flatMap(s=>s.fields.map(f=>f.label)),'Actions'];
-  th.innerHTML=cols.map(c=>`<th>${x(c)}</th>`).join('');
-}
-
+// ═══ RENDER TABLE ════════════════════════════════════════════
 function renderTable(rows){
-  renderTableHead();
-  const tb=document.getElementById('tBody');
-  document.getElementById('rowHint').textContent=`Showing ${rows.length} candidate${rows.length!==1?'s':''}`;
-  if(!rows.length){tb.innerHTML='<tr><td colspan="99" class="empty-td">No candidates match the filters.</td></tr>';return;}
-  const fields=allFields();
-  tb.innerHTML=rows.map((c,i)=>{
+  qS('#rowHint').textContent=`Showing ${rows.length} candidate${rows.length!==1?'s':''}`;
+  if(!rows.length){
+    qS('#tBody').innerHTML='<tr><td colspan="9" class="empty-td">No candidates match.</td></tr>';return;
+  }
+  qS('#tBody').innerHTML=rows.map((c,i)=>{
     const ri=candidates.indexOf(c);
-    const ec=adminMode?' editable':'';
-    const hp=pending[c.rowId]?' has-pending':'';
-    const cells=fields.map(f=>{
-      // Try schema key first, then normalised variants as fallback
-      const val=c[f.key] || c[normKey(f.key)] || c[f.label] || c[normKey(f.label)] || '';
-      if(f.key==='stage')
-        return `<td class="${ec}" ${adminMode?`onclick="iesel(event,${ri},'stage')"`:''}>
-          <span class="badge ${bc(val)}">${x(val)}</span></td>`;
-      if(f.type==='select')
-        return `<td class="${ec}" ${adminMode?`onclick="ieselCustom(event,${ri},'${f.key}','${f.optionsKey||''}')"`:''}>${x(val)}</td>`;
-      return `<td class="${ec}${f.key==='name'?hp:''}" ${adminMode?`onclick="ie(event,${ri},'${f.key}')"`:''}>
-        ${f.key==='name'?`<div style="font-weight:700">${x(val)}</div><div style="font-size:11px;color:var(--text-dim)">${x(c.email||'')||''}</div>`
-          :f.key==='comments'?`<div style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text-dim)" title="${x(val)}">${x(val)||'—'}</div>`
-          :x(val)||'—'}
-      </td>`;
-    }).join('');
-    return `<tr>
-      <td style="color:var(--text-dim);font-size:11px">${i+1}</td>
-      ${cells}
+    const ed=adminMode?' ed':'';
+    return`<tr>
+      <td style="color:var(--dim);font-size:11px">${i+1}</td>
+      <td class="${ed}" ${adminMode?`onclick="ie(event,${ri},'name')"`:''}>
+        <div style="font-weight:700">${x(c.name||'—')}</div>
+        <div style="font-size:11px;color:var(--dim)">${x(c.email||'')}</div>
+      </td>
+      <td class="${ed}" ${adminMode?`onclick="ie(event,${ri},'position')"`:''} style="font-weight:600">${x(c.position||'—')}</td>
+      <td class="${ed}" ${adminMode?`onclick="ie(event,${ri},'source')"`:''} style="font-size:12px;color:var(--mid)">${x(c.source||'—')}</td>
+      <td class="${ed}" ${adminMode?`onclick="iesel(event,${ri},'stage')"`:''}>
+        <span class="badge ${bc(c.stage)}">${x(c.stage||'—')}</span>
+      </td>
+      <td class="${ed}" ${adminMode?`onclick="ie(event,${ri},'recruiter')"`:''} >${x(c.recruiter||'—')}</td>
+      <td style="font-size:12px;color:var(--mid)">${fmtDate(c.date||c.applicationDate||'')}</td>
+      <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+          font-size:12px;color:var(--dim)" title="${x(c.comments||'')}">${x(c.comments||'—')}</td>
       <td style="white-space:nowrap">
-        <button class="btn btn-ghost btn-sm" onclick="openDetail(${ri})">View</button>
+        <button class="btn btn-ghost btn-sm" onclick="openView(${ri})">View</button>
         ${adminMode
-          ?`<button class="btn btn-yellow btn-sm" style="margin-left:4px" onclick="openAdminEdit(${ri})">✎ Edit</button>
-            <button onclick="quickDelete(${ri})" title="Delete" style="margin-left:6px;background:#7F1D1D;border:none;color:#fff;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:15px;line-height:1;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;transition:background .2s" onmouseover="this.style.background='#DC2626'" onmouseout="this.style.background='#7F1D1D'">✕</button>`
-          :`<button class="btn btn-red btn-sm" style="margin-left:4px" onclick="openEdit(${ri})">Update</button>`}
+          ?`<button class="btn btn-yellow btn-sm" style="margin-left:4px" onclick="openEdit(${ri})">✎ Edit</button>
+            <button class="del-row-btn" onclick="quickDel(${ri})" title="Delete">✕</button>`
+          :`<button class="btn btn-red btn-sm" style="margin-left:4px" onclick="openUpdate(${ri})">Update</button>`
+        }
       </td>
     </tr>`;
   }).join('');
 }
 
-// ═══ INLINE EDIT ═════════════════════════════════════════════
+// Format date — strips time portion if present
+function fmtDate(v){
+  if(!v) return '—';
+  const s=String(v);
+  // ISO date: 2026-05-18
+  const iso=s.match(/(\d{4}-\d{2}-\d{2})/);
+  if(iso) return iso[1];
+  // "Mon May 18 2026…" pattern
+  const parts=s.split(' ');
+  if(parts.length>=4 && parts[0].match(/[A-Za-z]{3}/)){
+    return `${parts[2]} ${parts[1]} ${parts[3]}`;
+  }
+  return s.slice(0,10);
+}
+
+// ═══ INLINE EDIT (admin) ════════════════════════════════════
 function ie(e,ri,field){
   if(!adminMode)return;
-  const td=e.currentTarget; if(td.querySelector('.ci'))return;
+  const td=e.currentTarget;if(td.querySelector('.ci'))return;
   const cur=candidates[ri][field]||'';
   td.innerHTML=`<input class="ci" value="${x(cur)}"/>`;
-  const inp=td.querySelector('input'); inp.focus(); inp.select();
-  inp.addEventListener('blur',()=>commit(td,ri,field,inp.value));
-  inp.addEventListener('keydown',ev=>{if(ev.key==='Enter')inp.blur();if(ev.key==='Escape')renderTable(filtered.length?filtered:candidates);});
+  const inp=td.querySelector('input');inp.focus();inp.select();
+  inp.addEventListener('blur',()=>commitCell(ri,field,inp.value));
+  inp.addEventListener('keydown',ev=>{
+    if(ev.key==='Enter')inp.blur();
+    if(ev.key==='Escape')renderTable(filtered.length?filtered:candidates);
+  });
 }
 function iesel(e,ri,field){
   if(!adminMode)return;
-  const td=e.currentTarget; if(td.querySelector('.csel'))return;
-  const opts=schema.dropdowns.stage?.options||['Screening','Interview 1','Interview 2','Offered','Hired','Rejected'];
-  td.innerHTML=`<select class="csel">${opts.map(s=>`<option${s===candidates[ri][field]?' selected':''} >${s}</option>`).join('')}</select>`;
-  const sel=td.querySelector('select'); sel.focus();
-  sel.addEventListener('change',()=>commit(td,ri,field,sel.value));
+  const td=e.currentTarget;if(td.querySelector('.csel'))return;
+  const stages=['Screening','Interview 1','Interview 2','Offered','Hired','Rejected'];
+  td.innerHTML=`<select class="csel">${stages.map(s=>`<option${s===candidates[ri].stage?' selected':''}>${s}</option>`).join('')}</select>`;
+  const sel=td.querySelector('select');sel.focus();
+  sel.addEventListener('change',()=>commitCell(ri,field,sel.value));
   sel.addEventListener('blur',()=>setTimeout(()=>{if(td.querySelector('.csel'))renderTable(filtered.length?filtered:candidates);},200));
 }
-function ieselCustom(e,ri,field,optKey){
-  if(!adminMode)return;
-  const td=e.currentTarget; if(td.querySelector('.csel'))return;
-  const opts=(optKey&&schema.dropdowns[optKey]?.options)||[];
-  if(!opts.length){ie(e,ri,field);return;}
-  td.innerHTML=`<select class="csel">${opts.map(s=>`<option${s===candidates[ri][field]?' selected':''} >${s}</option>`).join('')}</select>`;
-  const sel=td.querySelector('select'); sel.focus();
-  sel.addEventListener('change',()=>commit(td,ri,field,sel.value));
-  sel.addEventListener('blur',()=>setTimeout(()=>{if(td.querySelector('.csel'))renderTable(filtered.length?filtered:candidates);},200));
-}
-function commit(td,ri,field,val){
+async function commitCell(ri,field,val){
   const c=candidates[ri];
-  if(val!==c[field]){
-    c[field]=val;
-    if(!pending[c.rowId])pending[c.rowId]={};
-    pending[c.rowId][field]=val;
-    showToast(`"${field}" changed — click Save All`,'');
-  }
-  renderTable(filtered.length?filtered:candidates); renderDash();
-}
-async function saveAllPending(){
-  const ids=Object.keys(pending);
-  if(!ids.length){showToast('No pending changes','');return;}
-  for(const rowId of ids){
-    const c=candidates.find(z=>z.rowId===rowId); if(!c)continue;
-    try{await postToSheets({action:'updateCandidate',rowId:c.rowId,...pending[rowId]});}catch(e){console.error(e);}
-  }
-  pending={};
+  if(val===c[field]){renderTable(filtered.length?filtered:candidates);return;}
+  c[field]=val;
   renderTable(filtered.length?filtered:candidates);
-  showToast(`✓ ${ids.length} record${ids.length>1?'s':'' } saved`,'ok');
+  renderDash();
+  await api({action:'updateCandidate',rowId:c.rowId,[field]:val});
+  toast(`✓ ${field} updated`,'ok');
 }
 
-// ═══ DYNAMIC ADD FORM ════════════════════════════════════════
-function renderDynamicForm(){
-  const container=document.getElementById('dynamicForm');
-  container.innerHTML=schema.sections.map(sec=>{
-    const fields=sec.fields.map(f=>{
-      const req=f.required?'*':'';
-      let input='';
-      if(f.type==='select'){
-        const opts=(f.optionsKey&&schema.dropdowns[f.optionsKey]?.options)||[];
-        input=`<select id="af_${f.key}">${opts.map(o=>`<option>${x(o)}</option>`).join('')}</select>`;
-      } else if(f.type==='textarea'){
-        input=`<textarea id="af_${f.key}" placeholder="${x(f.label)}…"></textarea>`;
-      } else {
-        input=`<input type="${f.type}" id="af_${f.key}" placeholder="${x(f.label)}"/>`;
-      }
-      return `<div class="fg${f.full?' full':''}" ><label>${x(f.label)} ${req}</label>${input}</div>`;
-    }).join('');
-    return `<div class="fsec-title">${x(sec.title)}</div><div class="fgrid">${fields}</div>`;
+// ═══ VIEW MODAL ═════════════════════════════════════════════
+function openView(ri){
+  const c=candidates[ri];
+  qS('#vName').textContent=c.name||'Candidate';
+  qS('#vCmt').textContent=c.comments||'No comments.';
+  qS('#vGrid').innerHTML=[
+    ['Position',c.position],['Stage',`<span class="badge ${bc(c.stage)}">${x(c.stage)}</span>`],
+    ['Email',c.email||'—'],['Phone',c.phone||'—'],
+    ['Source',c.source||'—'],['Recruiter',c.recruiter||'—'],
+    ['Applied',fmtDate(c.date||c.applicationDate||'')],['ID',c.rowId||'—'],
+  ].map(([l,v])=>`<div class="df"><div class="df-l">${l}</div><div class="df-v">${v}</div></div>`).join('');
+  qS('#vActs').innerHTML=`
+    <button class="btn btn-red btn-sm" onclick="closeView();openUpdate(${ri})">Update Status</button>
+    ${adminMode?`<button class="btn btn-yellow btn-sm" onclick="closeView();openEdit(${ri})">✎ Edit All Fields</button>
+    <button class="btn btn-danger btn-sm" onclick="closeView();quickDel(${ri})">✕ Delete</button>`:''}
+  `;
+  qS('#viewOv').classList.add('on');
+}
+function closeView(){qS('#viewOv').classList.remove('on');}
+
+// ═══ EDIT MODAL (admin full edit) ══════════════════════════
+function openEdit(ri){
+  editIdx=ri;const c=candidates[ri];
+  const FIELDS=[
+    {k:'name',l:'Full Name',t:'text'},
+    {k:'email',l:'Email',t:'email'},
+    {k:'phone',l:'Phone',t:'text'},
+    {k:'date',l:'Application Date',t:'date'},
+    {k:'position',l:'Position',t:'text'},
+    {k:'recruiter',l:'Recruiter',t:'text'},
+    {k:'stage',l:'Stage',t:'select',opts:['Screening','Interview 1','Interview 2','Offered','Hired','Rejected']},
+    {k:'source',l:'Source',t:'select',opts:['LinkedIn','Naukri','Referral','Walk-in','Job Fair','Indeed','Other']},
+    {k:'comments',l:'Comments',t:'textarea',full:true},
+  ];
+  qS('#editGrid').innerHTML=FIELDS.map(f=>{
+    const v=c[f.k]||'';
+    let inp='';
+    if(f.t==='select') inp=`<select id="ef_${f.k}" style="padding:10px 13px;border:1px solid var(--line-lt);border-radius:var(--r);background:var(--soft);font-family:'Nunito',sans-serif;font-size:13px;color:var(--text);outline:none;width:100%">${(f.opts||[]).map(o=>`<option${o===v?' selected':''}>${o}</option>`).join('')}</select>`;
+    else if(f.t==='textarea') inp=`<textarea id="ef_${f.k}" style="padding:10px 13px;border:1px solid var(--line-lt);border-radius:var(--r);background:var(--soft);font-family:'Nunito',sans-serif;font-size:13px;color:var(--text);outline:none;min-height:80px;resize:vertical;width:100%">${x(v)}</textarea>`;
+    else inp=`<input type="${f.t}" id="ef_${f.k}" value="${x(v)}" style="padding:10px 13px;border:1px solid var(--line-lt);border-radius:var(--r);background:var(--soft);font-family:'Nunito',sans-serif;font-size:13px;color:var(--text);outline:none;width:100%"/>`;
+    return `<div class="fg${f.full?' full':''}" ><label>${f.l}</label>${inp}</div>`;
   }).join('');
-  // set today's date on date fields
-  schema.sections.flatMap(s=>s.fields).filter(f=>f.type==='date').forEach(f=>{
-    const el=document.getElementById('af_'+f.key);
-    if(el&&!el.value) el.value=new Date().toISOString().slice(0,10);
+  qS('#editOv').classList.add('on');
+}
+async function saveEdit(){
+  const c=candidates[editIdx];
+  const keys=['name','email','phone','date','position','recruiter','stage','source','comments'];
+  const upd={action:'updateCandidate',rowId:c.rowId};
+  keys.forEach(k=>{
+    const el=qS(`#ef_${k}`);if(el){upd[k]=el.value;c[k]=el.value;}
   });
+  await api(upd);
+  renderTable(filtered.length?filtered:candidates);renderDash();
+  closeEdit();toast('✓ Candidate updated','ok');
+}
+async function deleteFromEdit(){
+  const c=candidates[editIdx];
+  if(!confirm(`Delete "${c.name||'this candidate'}"? Cannot be undone.`))return;
+  await api({action:'deleteCandidate',rowId:c.rowId});
+  candidates.splice(editIdx,1);filtered=[...candidates];
+  renderTable(candidates);renderDash();closeEdit();
+  toast('Candidate deleted','er');
+}
+function closeEdit(){qS('#editOv').classList.remove('on');}
+
+// ═══ QUICK DELETE (row ✕ button) ════════════════════════════
+async function quickDel(ri){
+  const c=candidates[ri];
+  if(!confirm(`Delete "${c.name||'this candidate'}"?`))return;
+  await api({action:'deleteCandidate',rowId:c.rowId});
+  candidates.splice(ri,1);filtered=[...candidates];
+  renderTable(candidates);renderDash();
+  toast('Deleted','er');
 }
 
+// ═══ QUICK UPDATE MODAL (non-admin) ═════════════════════════
+function openUpdate(ri){
+  updateIdx=ri;const c=candidates[ri];
+  qS('#uStage').value=c.stage||'Screening';
+  qS('#uRec').value=c.recruiter||'';
+  qS('#uCmt').value='';
+  qS('#updateOv').classList.add('on');
+}
+function closeUpdate(){qS('#updateOv').classList.remove('on');}
+async function saveUpdate(){
+  const c=candidates[updateIdx];
+  const stage=qS('#uStage').value;
+  const rec=qS('#uRec').value.trim();
+  const cmt=qS('#uCmt').value.trim();
+  const comments=[c.comments,cmt].filter(Boolean).join('\n—\n');
+  c.stage=stage;c.recruiter=rec;if(cmt)c.comments=comments;
+  await api({action:'updateCandidate',rowId:c.rowId,stage,recruiter:rec,comments});
+  renderTable(filtered.length?filtered:candidates);renderDash();
+  closeUpdate();toast('✓ Updated','ok');
+}
+
+// ═══ ADD CANDIDATE ═══════════════════════════════════════════
 async function submitCandidate(){
-  const fields=allFields();
-  const msg=document.getElementById('formMsg');
-  // Validate required
-  for(const f of fields){
-    if(f.required){
-      const el=document.getElementById('af_'+f.key);
-      if(!el||!el.value.trim()){
-        msg.className='fm er'; msg.textContent=`⚠ ${f.label} is required.`; return;
-      }
-    }
-  }
-  const btn=document.getElementById('submitBtn');
-  btn.innerHTML='<span class="spin"></span> Saving…'; btn.disabled=true;
-  const payload={action:'addCandidate'};
-  fields.forEach(f=>{
-    const el=document.getElementById('af_'+f.key);
-    payload[f.key]=el?el.value.trim():'';
-  });
-  // fallback defaults
-  if(!payload.date) payload.date=new Date().toISOString().slice(0,10);
-  try{
-    await postToSheets(payload);
-    candidates.push({...payload,rowId:'BC-NEW-'+Date.now()});
-    filtered=[...candidates]; renderDash();
-    msg.className='fm ok'; msg.textContent='✓ Candidate saved to Google Sheets!';
-    clearAdd(true); showToast('✓ Candidate added','ok');
-  }catch{msg.className='fm er'; msg.textContent='⚠ Save failed — check SCRIPT_URL.';}
-  finally{btn.innerHTML='Save Candidate'; btn.disabled=false;}
+  const name=qS('#aN').value.trim();
+  const pos=qS('#aPo').value.trim();
+  const rec=qS('#aRe').value.trim();
+  const msg=qS('#formMsg');
+  if(!name||!pos||!rec){msg.className='fm er';msg.textContent='⚠ Name, Position and Recruiter are required.';return;}
+  const btn=qS('#submitBtn');btn.innerHTML='<span class="spin"></span> Saving…';btn.disabled=true;
+  const payload={action:'addCandidate',name,position:pos,recruiter:rec,
+    email:qS('#aE').value.trim(),phone:qS('#aPh').value.trim(),
+    source:qS('#aSr').value,stage:qS('#aSt').value,
+    date:qS('#aDt').value||new Date().toISOString().slice(0,10),
+    comments:qS('#aCo').value.trim()};
+  await api(payload);
+  // Reload to get the server-assigned rowId
+  await loadAll();
+  msg.className='fm ok';msg.textContent='✓ Saved!';
+  clearAdd(true);toast('✓ Candidate added','ok');
+  btn.innerHTML='Save Candidate';btn.disabled=false;
 }
 function clearAdd(keepMsg){
-  allFields().forEach(f=>{
-    const el=document.getElementById('af_'+f.key); if(el) el.value='';
-  });
-  // re-set dates
-  allFields().filter(f=>f.type==='date').forEach(f=>{
-    const el=document.getElementById('af_'+f.key); if(el) el.value=new Date().toISOString().slice(0,10);
-  });
-  if(!keepMsg) document.getElementById('formMsg').textContent='';
+  ['aN','aE','aPh','aPo','aRe','aCo'].forEach(id=>qS('#'+id).value='');
+  qS('#aDt').value=new Date().toISOString().slice(0,10);
+  if(!keepMsg)qS('#formMsg').textContent='';
 }
 
 // ═══ FILTER ══════════════════════════════════════════════════
 function doFilter(){
-  const q=document.getElementById('searchQ').value.toLowerCase();
-  const fs=document.getElementById('fStage').value;
-  const fp=document.getElementById('fPos').value;
+  const q=qS('#searchQ').value.toLowerCase();
+  const fs=qS('#fStage').value;
+  const fp=qS('#fPos').value;
   filtered=candidates.filter(c=>{
-    const mq=!q||Object.values(c).join(' ').toLowerCase().includes(q);
-    const cStage=c.stage||c['Current Stage']||'';
-    const cPos=c.position||c['Position Applied']||c['Position Applied For']||'';
-    return mq&&(!fs||cStage===fs)&&(!fp||cPos===fp);
+    const mq=!q||[c.name,c.position,c.recruiter,c.source,c.email,c.phone].join(' ').toLowerCase().includes(q);
+    return mq&&(!fs||c.stage===fs)&&(!fp||c.position===fp);
   });
   renderTable(filtered);
 }
-function buildFilterDropdowns(){
-  const stageOpts=schema.dropdowns.stage?.options||[];
-  document.getElementById('fStage').innerHTML=
-    '<option value="">All Stages</option>'+stageOpts.map(s=>`<option>${x(s)}</option>`).join('');
-  const pos=[...new Set(candidates.map(c=>
-    c.position||c['Position Applied']||c['Position Applied For']||''
-  ).filter(Boolean))].sort();
-  document.getElementById('fPos').innerHTML=
-    '<option value="">All Positions</option>'+pos.map(p=>`<option>${x(p)}</option>`).join('');
+function buildPosFilter(){
+  const pos=[...new Set(candidates.map(c=>c.position).filter(Boolean))].sort();
+  qS('#fPos').innerHTML='<option value="">All Positions</option>'+pos.map(p=>`<option>${x(p)}</option>`).join('');
 }
 
-// ═══ DASHBOARD (driven by statCards schema) ══════════════════
-function countStage(stage){
-  const getStage=c=>c.stage||c['Current Stage']||'';
-  if(stage==='__all__') return candidates.length;
-  if(stage==='__active__'){
-    const activeStages=(schema.dropdowns.stage?.options||[]).filter(s=>!['Offered','Hired','Rejected'].includes(s));
-    return candidates.filter(c=>activeStages.includes(getStage(c))).length;
-  }
-  return candidates.filter(c=>getStage(c)===stage).length;
-}
-const COLOR_MAP={
-  'red-yellow':'linear-gradient(90deg,#D42B2B,#F5C518)',
-  'orange':'linear-gradient(90deg,#C2410C,#FB923C)',
-  'green':'linear-gradient(90deg,#166534,#4ADE80)',
-  'blue':'linear-gradient(90deg,#1E40AF,#60A5FA)',
-  'purple':'linear-gradient(90deg,#581C87,#A855F7)',
-  'red':'linear-gradient(90deg,#7F1D1D,#EF4444)',
-};
+// ═══ DASHBOARD ═══════════════════════════════════════════════
+const PIPE=[
+  {l:'Screening',c:'#6366F1'},{l:'Interview 1',c:'#F59E0B'},
+  {l:'Interview 2',c:'#0EA5E9'},{l:'Offered',c:'#22C55E'},
+  {l:'Hired',c:'#16A34A'},{l:'Rejected',c:'#D42B2B'},
+];
+const STAT_COLORS=['linear-gradient(90deg,#D42B2B,#F5C518)','linear-gradient(90deg,#C2410C,#FB923C)',
+  'linear-gradient(90deg,#166534,#4ADE80)','linear-gradient(90deg,#1E40AF,#60A5FA)',
+  'linear-gradient(90deg,#7F1D1D,#EF4444)'];
 function renderDash(){
-  const grid=document.getElementById('statsGrid');
-  grid.innerHTML=schema.statCards.map((sc,i)=>`
-    <div class="sc" style="--sc-color:${COLOR_MAP[sc.color]||COLOR_MAP['red-yellow']}">
-      <style>.sc:nth-child(${i+1})::before{background:${COLOR_MAP[sc.color]||COLOR_MAP['red-yellow']}}</style>
-      <button class="sc-del-btn" title="Remove stat card" onclick="deleteStatCard('${sc.id}')">✕</button>
-      <div class="sc-lbl">${x(sc.label)}</div>
-      <div class="sc-num">${countStage(sc.stage)}</div>
-      <div class="sc-hint">${x(sc.hint)}</div>
+  const n=s=>candidates.filter(c=>c.stage===s).length;
+  const active=n('Screening')+n('Interview 1')+n('Interview 2');
+  const CARDS=[
+    {l:'Total Applications',v:candidates.length,h:'All candidates'},
+    {l:'In Progress',v:active,h:'Screening + Interviews'},
+    {l:'Offers Made',v:n('Offered'),h:'Awaiting response'},
+    {l:'Hired',v:n('Hired'),h:'Positions filled'},
+    {l:'Rejected',v:n('Rejected'),h:'This cycle'},
+  ];
+  qS('#statsGrid').innerHTML=CARDS.map((c,i)=>`
+    <div class="sc" style="--g:${STAT_COLORS[i]}">
+      <style>#statsGrid .sc:nth-child(${i+1})::before{background:${STAT_COLORS[i]}}</style>
+      <div class="sc-lbl">${c.l}</div>
+      <div class="sc-num">${c.v}</div>
+      <div class="sc-hint">${c.h}</div>
     </div>`).join('');
 
-  const segs=[
-    {l:'Screening',c:'#6366F1'},{l:'Interview 1',c:'#F59E0B'},
-    {l:'Interview 2',c:'#0EA5E9'},{l:'Offered',c:'#22C55E'},
-    {l:'Hired',c:'#16A34A'},{l:'Rejected',c:'#D42B2B'},
-  ];
-  const n=s=>candidates.filter(c=>(c.stage||c['Current Stage']||'')===s).length;
-  document.getElementById('plTrack').innerHTML=segs.map(s=>
-    `<div class="ps" style="background:${s.c};flex:${Math.max(n(s.l),.2)}" title="${s.l}: ${n(s.l)}">${n(s.l)||''}</div>`
+  const tot=candidates.length||1;
+  qS('#plTrack').innerHTML=PIPE.map(s=>
+    `<div class="ps" style="background:${s.c};flex:${Math.max(n(s.l),.15)}" title="${s.l}: ${n(s.l)}">${n(s.l)||''}</div>`
   ).join('');
-  document.getElementById('plLeg').innerHTML=segs.map(s=>
+  qS('#plLeg').innerHTML=PIPE.map(s=>
     `<div class="pl-li"><div class="pl-dot" style="background:${s.c}"></div>${s.l} (${n(s.l)})</div>`
   ).join('');
-  const rec=[...candidates].slice(-5).reverse();
-  document.getElementById('recentList').innerHTML=rec.length
+
+  const rec=[...candidates].slice(0,5);
+  qS('#recentList').innerHTML=rec.length
     ?rec.map(c=>`<div class="recent-row">
-        <span class="badge ${bc(c.stage||c['Current Stage']||'')}">${x(c.stage||c['Current Stage']||'—')}</span>
-        <span style="font-weight:700">${x(c.name||c['Full Name']||'—')}</span>
-        <span style="color:var(--text-mid)">${x(c.position||c['Position Applied']||'')} </span>
-        <span style="margin-left:auto;font-size:11px;color:var(--text-dim)">${x(c.date||c['Application Date']||'')} </span>
+        <span class="badge ${bc(c.stage)}">${x(c.stage)}</span>
+        <span style="font-weight:700">${x(c.name||'—')}</span>
+        <span style="color:var(--mid)">${x(c.position||'')}</span>
+        <span style="margin-left:auto;font-size:11px;color:var(--dim)">${fmtDate(c.date||c.applicationDate||'')}</span>
       </div>`).join('')
-    :'<span style="color:var(--text-dim);font-style:italic;font-size:13px">No candidates yet.</span>';
+    :'<span style="color:var(--dim);font-style:italic;font-size:13px">No candidates yet.</span>';
 }
 
-// ═══ DETAIL MODAL ════════════════════════════════════════════
-function openDetail(ri){
-  const c=candidates[ri];
-  document.getElementById('dName').textContent=c.name||c['Full Name']||'Candidate';
-  const commentsField=allFields().find(f=>f.key==='comments');
-  document.getElementById('dCmt').textContent=c.comments||'No comments yet.';
-  document.getElementById('dGrid').innerHTML=allFields()
-    .filter(f=>f.key!=='comments')
-    .map(f=>{const dv=c[f.key]||c[normKey(f.key)]||c[f.label]||'';
-      return `<div class="df"><div class="df-l">${x(f.label)}</div>
-      <div class="df-v">${f.key==='stage'?`<span class="badge ${bc(dv)}">${x(dv||'—')}</span>`:x(dv||'—')}</div></div>`;}).join('');
-  document.getElementById('dActs').innerHTML=`
-    <button class="btn btn-red btn-sm" onclick="closeDetail();openEdit(${ri})">Update Stage</button>
-    ${adminMode?`<button class="btn btn-yellow btn-sm" onclick="closeDetail();openAdminEdit(${ri})">✎ Edit All Fields</button>`:''}
-  `;
-  document.getElementById('detailOv').classList.add('open');
-}
-function closeDetail(){document.getElementById('detailOv').classList.remove('open');}
-
-// ═══ QUICK EDIT ══════════════════════════════════════════════
-function openEdit(ri){
-  editIdx=ri; const c=candidates[ri];
-  const stageOpts=schema.dropdowns.stage?.options||[];
-  document.getElementById('quickEditFields').innerHTML=`
-    <div class="mfg"><label>Stage</label>
-      <select id="eStage">${stageOpts.map(s=>`<option${s===c.stage?' selected':''} >${s}</option>`).join('')}</select>
-    </div>
-    <div class="mfg"><label>Recruiter</label><input type="text" id="eRec" value="${x(c.recruiter||'')}"/></div>
-    <div class="mfg"><label>Append Comment</label><textarea id="eCmt" placeholder="Add note…"></textarea></div>`;
-  document.getElementById('editOv').classList.add('open');
-}
-function closeEdit(){document.getElementById('editOv').classList.remove('open');}
-async function saveEdit(){
-  const c=candidates[editIdx];
-  const ns=document.getElementById('eStage').value;
-  const nr=document.getElementById('eRec').value.trim();
-  const nc=document.getElementById('eCmt').value.trim();
-  const cmt=[c.comments,nc].filter(Boolean).join('\n—\n');
-  c.stage=ns; c.recruiter=nr; if(nc)c.comments=cmt;
-  try{
-    await postToSheets({action:'updateCandidate',rowId:c.rowId,stage:ns,recruiter:nr,comments:cmt});
-    renderTable(filtered.length?filtered:candidates); renderDash();
-    closeEdit(); showToast('✓ Updated','ok');
-  }catch{showToast('Error saving','er');}
+// ═══ EXCEL EXPORT ════════════════════════════════════════════
+function exportExcel(){
+  if(!candidates.length){toast('No data to export','er');return;}
+  const COLS=['name','email','phone','date','position','source','stage','recruiter','comments'];
+  const HDRS=['Name','Email','Phone','Application Date','Position','Source','Stage','Recruiter','Comments'];
+  const ws_data=[HDRS,...candidates.map(c=>COLS.map(k=>c[k]||''))];
+  const ws=XLSX.utils.aoa_to_sheet(ws_data);
+  // Column widths
+  ws['!cols']=[20,25,15,15,22,12,14,18,40].map(w=>({wch:w}));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Candidates');
+  XLSX.writeFile(wb,`BCReamy_Candidates_${new Date().toISOString().slice(0,10)}.xlsx`);
+  toast('✓ Excel exported','ok');
 }
 
-// ═══ ADMIN FULL EDIT ═════════════════════════════════════════
-function openAdminEdit(ri){
-  adminIdx=ri; const c=candidates[ri];
-  document.getElementById('adminEditGrid').innerHTML=`<div class="fgrid">`+
-    allFields().map(f=>{
-      const val=c[f.key]||c[normKey(f.key)]||c[f.label]||'';
-      let inp='';
-      if(f.type==='select'){
-        const opts=(f.optionsKey&&schema.dropdowns[f.optionsKey]?.options)||[];
-        inp=`<select id="ae_${f.key}" style="padding:11px 14px;border:1px solid var(--border-lt);border-radius:var(--r);background:var(--black-soft);font-family:'Nunito',sans-serif;font-size:13px;color:var(--text-main);outline:none;width:100%">
-          ${opts.map(o=>`<option${o===val?' selected':''} >${o}</option>`).join('')}</select>`;
-      } else if(f.type==='textarea'){
-        inp=`<textarea id="ae_${f.key}" style="padding:11px 14px;border:1px solid var(--border-lt);border-radius:var(--r);background:var(--black-soft);font-family:'Nunito',sans-serif;font-size:13px;color:var(--text-main);outline:none;min-height:80px;resize:vertical;width:100%">${x(val)}</textarea>`;
-      } else {
-        inp=`<input type="${f.type}" id="ae_${f.key}" value="${x(val)}" style="padding:11px 14px;border:1px solid var(--border-lt);border-radius:var(--r);background:var(--black-soft);font-family:'Nunito',sans-serif;font-size:13px;color:var(--text-main);outline:none;width:100%"/>`;
-      }
-      return `<div class="fg${f.full?' full':''}" ><label>${x(f.label)}</label>${inp}</div>`;
-    }).join('')+'</div>';
-  document.getElementById('adminOv').classList.add('open');
-}
-async function saveAdminEdit(){
-  const c=candidates[adminIdx];
-  const upd={};
-  allFields().forEach(f=>{upd[f.key]=document.getElementById('ae_'+f.key)?.value||'';});
-  Object.assign(c,upd);
-  try{
-    await postToSheets({action:'updateCandidate',rowId:c.rowId,...upd});
-    delete pending[c.rowId];
-    renderTable(filtered.length?filtered:candidates); renderDash();
-    closeAdminEdit(); showToast('✓ Record fully updated','ok');
-  }catch{showToast('Error saving','er');}
-}
-async function deleteRecord(){
-  const c=candidates[adminIdx];
-  if(!confirm(`Permanently delete "${c.name||'this record'}"?`))return;
-  try{
-    await postToSheets({action:'deleteCandidate',rowId:c.rowId});
-    candidates.splice(adminIdx,1); filtered=[...candidates];
-    renderTable(candidates); renderDash(); closeAdminEdit();
-    showToast('Record deleted','er');
-  }catch{showToast('Error deleting','er');}
-}
-function closeAdminEdit(){document.getElementById('adminOv').classList.remove('open');}
+// ═══ EXCEL IMPORT ════════════════════════════════════════════
+const IMPORT_MAP={
+  // accepted header → internal key
+  'name':'name','full name':'name','candidate name':'name','candidate':'name',
+  'email':'email','email address':'email','e-mail':'email',
+  'phone':'phone','mobile':'phone','phone number':'phone','contact':'phone','contact number':'phone',
+  'date':'date','application date':'date','applied date':'date','applied on':'date','joining date':'date',
+  'position':'position','position applied':'position','position applied for':'position',
+  'job title':'position','role':'position','designation':'position',
+  'source':'source','referral source':'source','channel':'source',
+  'stage':'stage','current stage':'stage','status':'stage',
+  'recruiter':'recruiter','assigned recruiter':'recruiter','hr':'recruiter','hr name':'recruiter',
+  'comments':'comments','notes':'comments','feedback':'comments','remarks':'comments',
+};
 
-// Quick delete straight from the table row (admin only)
-async function quickDelete(ri){
-  const c=candidates[ri];
-  const label=c.name||c['Full Name']||'this candidate';
-  if(!confirm(`Permanently delete "${label}"?\nThis cannot be undone.`))return;
-  const ok=await postToSheets({action:'deleteCandidate',rowId:c.rowId});
-  if(ok){
-    candidates.splice(ri,1); filtered=[...candidates];
-    renderTable(candidates); renderDash();
-    showToast('Record deleted','er');
-  } else {
-    showToast('Error deleting — check connection','er');
+function handleDrop(e){
+  e.preventDefault();qS('#importZone').classList.remove('drag');
+  handleFile(e.dataTransfer.files[0]);
+}
+function handleFile(file){
+  if(!file){return;}
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const data=new Uint8Array(ev.target.result);
+    const wb=XLSX.read(data,{type:'array',cellDates:true});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+    if(raw.length<2){toast('File appears empty','er');return;}
+    parseImport(raw);
+  };
+  reader.readAsArrayBuffer(file);
+}
+function parseImport(raw){
+  const headers=raw[0].map(h=>String(h).trim().toLowerCase());
+  const keyMap=headers.map(h=>IMPORT_MAP[h]||null);
+  importRows=raw.slice(1)
+    .filter(row=>row.some(c=>String(c).trim()))
+    .map(row=>{
+      const obj={};
+      keyMap.forEach((k,i)=>{ if(k) obj[k]=String(row[i]||'').trim(); });
+      return obj;
+    })
+    .filter(obj=>obj.name||obj.email||obj.phone);
+
+  if(!importRows.length){toast('No valid rows found. Check your column headers.','er');return;}
+
+  // Preview
+  qS('#importSummary').textContent=`Found ${importRows.length} candidate${importRows.length!==1?'s':''} — review before importing`;
+  qS('#importTable').innerHTML=`<table>
+    <thead><tr><th>#</th><th>Name</th><th>Position</th><th>Stage</th><th>Source</th><th>Recruiter</th></tr></thead>
+    <tbody>${importRows.slice(0,20).map((r,i)=>`<tr>
+      <td>${i+1}</td><td>${x(r.name||'—')}</td><td>${x(r.position||'—')}</td>
+      <td><span class="badge ${bc(r.stage)}">${x(r.stage||'—')}</span></td>
+      <td>${x(r.source||'—')}</td><td>${x(r.recruiter||'—')}</td>
+    </tr>`).join('')}${importRows.length>20?`<tr><td colspan="6" style="text-align:center;color:var(--dim);padding:10px">…and ${importRows.length-20} more</td></tr>`:''}</tbody>
+  </table>`;
+  qS('#importPreview').style.display='';
+}
+async function confirmImport(){
+  if(!importRows.length)return;
+  const btn=qS('#importBtn');btn.textContent='Importing…';btn.disabled=true;
+  let ok=0,fail=0;
+  for(const row of importRows){
+    row.action='addCandidate';
+    row.date=row.date||new Date().toISOString().slice(0,10);
+    row.stage=row.stage||'Screening';
+    try{await api(row);ok++;}catch{fail++;}
   }
+  btn.textContent='✓ Import All Candidates';btn.disabled=false;
+  await loadAll();
+  cancelImport();
+  toast(`✓ Imported ${ok} candidates${fail?` (${fail} failed)`:''}`,ok>0?'ok':'er');
+  switchTab('candidates',qS('.tab[data-t=candidates]'));
+}
+function cancelImport(){
+  importRows=[];
+  qS('#importPreview').style.display='none';
+  qS('#importTable').innerHTML='';
+  qS('#xlFile').value='';
 }
 
-// ═══ FORM BUILDER ════════════════════════════════════════════
-function renderBuilder(){
-  renderSectionList();
-  renderDropdownManager();
-  renderStatBuilder();
-  if(activeSectionId) renderFieldList(activeSectionId);
-}
-
-function renderSectionList(){
-  const list=document.getElementById('sectionList');
-  list.innerHTML=schema.sections.map((sec,i)=>`
-    <div class="sec-item${sec.id===activeSectionId?' active':''}" onclick="selectSection('${sec.id}')">
-      <span class="sec-drag">⠿</span>
-      <span class="sec-item-name">${x(sec.title)}</span>
-      <span class="sec-item-count">${sec.fields.length}</span>
-      <button class="sec-del" onclick="event.stopPropagation();deleteSection('${sec.id}')" title="Delete section">✕</button>
-    </div>`).join('');
-}
-
-function selectSection(id){
-  activeSectionId=id; renderSectionList(); renderFieldList(id);
-}
-
-function renderFieldList(secId){
-  const sec=schema.sections.find(s=>s.id===secId);
-  const head=document.getElementById('fieldEditorHead');
-  const list=document.getElementById('fieldList');
-  const addBtn=document.getElementById('addFieldBtn');
-  if(!sec){head.childNodes[0].textContent='Select a section ←'; addBtn.style.display='none'; return;}
-  head.childNodes[0].textContent=sec.title;
-  addBtn.style.display='';
-  if(!sec.fields.length){
-    list.innerHTML='<div style="text-align:center;padding:40px;color:var(--text-dim);font-style:italic;font-size:13px">No fields yet — click + Add Field</div>';
-    return;
-  }
-  list.innerHTML=sec.fields.map((f,i)=>`
-    <div class="field-row">
-      <span class="field-drag">⠿</span>
-      <div class="field-info">
-        <div class="field-label">${x(f.label)}</div>
-        <div class="field-type">${f.type}${f.optionsKey?` · options: ${f.optionsKey}`:''}</div>
-      </div>
-      ${f.required?'<span class="field-req">Required</span>':''}
-      <div class="field-actions">
-        <button class="ico-btn edit-ico" onclick="openEditField('${secId}',${i})" title="Edit field">✎</button>
-        <button class="ico-btn del-ico" onclick="deleteField('${secId}',${i})" title="Delete field">✕</button>
-      </div>
-    </div>`).join('');
-}
-
-// Add Section
-function addSection(){document.getElementById('newSecName').value=''; document.getElementById('addSecOv').classList.add('open'); setTimeout(()=>document.getElementById('newSecName').focus(),80);}
-function closeAddSec(){document.getElementById('addSecOv').classList.remove('open');}
-function confirmAddSection(){
-  const name=document.getElementById('newSecName').value.trim();
-  if(!name){showToast('Enter a section title','er');return;}
-  schema.sections.push({id:'sec_'+Date.now(),title:name,fields:[]});
-  saveAndSync(); renderBuilder(); renderDynamicForm();
-  closeAddSec(); showToast('Section added','ok');
-}
-function deleteSection(id){
-  if(!confirm('Delete this section and all its fields?'))return;
-  schema.sections=schema.sections.filter(s=>s.id!==id);
-  if(activeSectionId===id) activeSectionId=null;
-  saveAndSync(); renderBuilder(); renderDynamicForm();
-  showToast('Section deleted','er');
-}
-
-// Add / Edit Field
-let fieldModalMode='add';
-function addField(){
-  if(!activeSectionId){showToast('Select a section first','er');return;}
-  fieldModalMode='add'; editingFieldIdx=null;
-  document.getElementById('fieldModalTitle').textContent='Add Field';
-  document.getElementById('fld_label').value='';
-  document.getElementById('fld_type').value='text';
-  document.getElementById('fld_key').value='';
-  document.getElementById('fld_opts').value='';
-  document.getElementById('fld_req').checked=false;
-  document.getElementById('fld_full').checked=false;
-  document.getElementById('fld_opts_row').style.display='none';
-  document.getElementById('fieldOv').classList.add('open');
-  setTimeout(()=>document.getElementById('fld_label').focus(),80);
-}
-function openEditField(secId,idx){
-  const sec=schema.sections.find(s=>s.id===secId);
-  const f=sec.fields[idx];
-  fieldModalMode='edit'; editingFieldIdx=idx; activeSectionId=secId;
-  document.getElementById('fieldModalTitle').textContent='Edit Field';
-  document.getElementById('fld_label').value=f.label;
-  document.getElementById('fld_type').value=f.type;
-  document.getElementById('fld_key').value=f.key;
-  if(f.type==='select'&&f.optionsKey&&schema.dropdowns[f.optionsKey]){
-    document.getElementById('fld_opts').value=schema.dropdowns[f.optionsKey].options.join('\n');
-    document.getElementById('fld_opts_row').style.display='';
-  } else {
-    document.getElementById('fld_opts').value='';
-    document.getElementById('fld_opts_row').style.display='none';
-  }
-  document.getElementById('fld_req').checked=!!f.required;
-  document.getElementById('fld_full').checked=!!f.full;
-  document.getElementById('fieldOv').classList.add('open');
-}
-function onFieldTypeChange(){
-  const t=document.getElementById('fld_type').value;
-  document.getElementById('fld_opts_row').style.display=t==='select'?'':' none';
-}
-function closeFieldModal(){document.getElementById('fieldOv').classList.remove('open');}
-function confirmField(){
-  const label=document.getElementById('fld_label').value.trim();
-  const type=document.getElementById('fld_type').value;
-  const required=document.getElementById('fld_req').checked;
-  const full=document.getElementById('fld_full').checked;
-  if(!label){showToast('Enter a field label','er');return;}
-  let key=document.getElementById('fld_key').value.trim()||label.replace(/[^a-zA-Z0-9]/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'').toLowerCase();
-  let optionsKey=null;
-  if(type==='select'){
-    const rawOpts=document.getElementById('fld_opts').value.trim();
-    const opts=rawOpts?rawOpts.split('\n').map(o=>o.trim()).filter(Boolean):[];
-    if(opts.length){
-      optionsKey=key;
-      schema.dropdowns[key]={label,options:opts};
-    }
-  }
-  const field={id:'f_'+Date.now(),label,type,key,required,full,optionsKey};
-  const sec=schema.sections.find(s=>s.id===activeSectionId);
-  if(fieldModalMode==='add'){
-    sec.fields.push(field);
-  } else {
-    sec.fields[editingFieldIdx]=field;
-  }
-  saveAndSync(); renderBuilder(); renderDynamicForm(); buildFilterDropdowns();
-  closeFieldModal();
-  showToast(fieldModalMode==='add'?'Field added':'Field updated','ok');
-}
-function deleteField(secId,idx){
-  if(!confirm('Delete this field?'))return;
-  const sec=schema.sections.find(s=>s.id===secId);
-  sec.fields.splice(idx,1);
-  saveAndSync(); renderBuilder(); renderDynamicForm();
-  showToast('Field deleted','er');
-}
-
-// ═══ DROPDOWN MANAGER ════════════════════════════════════════
-function renderDropdownManager(){
-  const keys=Object.keys(schema.dropdowns);
-  if(!keys.length){document.getElementById('dmBody').innerHTML='<div style="color:var(--text-dim);font-style:italic;font-size:13px;padding:10px">No dropdowns yet. Add a dropdown field in a section above.</div>';return;}
-  if(!activeDmTab||!schema.dropdowns[activeDmTab]) activeDmTab=keys[0];
-  document.getElementById('dmTabs').innerHTML=keys.map(k=>
-    `<button class="dm-tab${k===activeDmTab?' active':''}" onclick="setDmTab('${k}')">${x(schema.dropdowns[k].label||k)}</button>`
-  ).join('');
-  renderDmBody();
-}
-function setDmTab(key){activeDmTab=key; renderDropdownManager();}
-function renderDmBody(){
-  const opts=schema.dropdowns[activeDmTab]?.options||[];
-  document.getElementById('dmBody').innerHTML=
-    opts.map((o,i)=>`
-      <div class="opt-item">
-        <span class="opt-drag">⠿</span>
-        <span class="opt-label">${x(o)}</span>
-        ${i===0?'<span class="opt-default">Default</span>':''}
-        <button class="opt-del" onclick="deleteOption('${activeDmTab}',${i})" title="Remove option">✕</button>
-      </div>`).join('')+
-    `<div class="add-opt-row">
-      <input type="text" id="newOptInput_${activeDmTab}" placeholder="Add new option…" onkeydown="if(event.key==='Enter')addOption('${activeDmTab}')"/>
-      <button class="btn btn-yellow btn-sm" onclick="addOption('${activeDmTab}')">+ Add</button>
-    </div>`;
-}
-function addOption(key){
-  const inp=document.getElementById('newOptInput_'+key);
-  const val=inp?.value.trim();
-  if(!val){showToast('Enter an option value','er');return;}
-  schema.dropdowns[key].options.push(val);
-  inp.value='';
-  saveAndSync(); renderDropdownManager(); buildFilterDropdowns(); renderDynamicForm();
-  showToast(`"${val}" added to ${schema.dropdowns[key].label}`,'ok');
-}
-function deleteOption(key,idx){
-  schema.dropdowns[key].options.splice(idx,1);
-  saveAndSync(); renderDropdownManager(); renderDynamicForm();
-  showToast('Option removed','er');
-}
-
-// ═══ STAT BUILDER ════════════════════════════════════════════
-function renderStatBuilder(){
-  const grid=document.getElementById('statBuilderGrid');
-  grid.innerHTML=schema.statCards.map((sc,i)=>`
-    <div class="stat-builder-card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <span style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--text-dim)">Stat Card ${i+1}</span>
-        <button class="btn btn-xs btn-ghost-red" onclick="deleteStatCard('${sc.id}')">✕ Remove</button>
-      </div>
-      <div class="sb-row"><label>Label</label><input type="text" value="${x(sc.label)}" onchange="updateStatCard('${sc.id}','label',this.value)"/></div>
-      <div class="sb-row"><label>Stage</label>
-        <select onchange="updateStatCard('${sc.id}','stage',this.value)">
-          <option value="__all__"${sc.stage==='__all__'?' selected':''}>All Candidates</option>
-          <option value="__active__"${sc.stage==='__active__'?' selected':''}>Active (Screening+Interviews)</option>
-          ${(schema.dropdowns.stage?.options||[]).map(s=>`<option${s===sc.stage?' selected':''} >${s}</option>`).join('')}
-        </select>
-      </div>
-      <div class="sb-row"><label>Hint</label><input type="text" value="${x(sc.hint)}" onchange="updateStatCard('${sc.id}','hint',this.value)"/></div>
-      <div class="sb-row"><label>Color</label>
-        <select onchange="updateStatCard('${sc.id}','color',this.value)">
-          ${Object.keys(COLOR_MAP).map(c=>`<option value="${c}"${c===sc.color?' selected':''} >${c}</option>`).join('')}
-        </select>
-      </div>
-      <div class="stat-preview" style="background:var(--black-card)">
-        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${COLOR_MAP[sc.color]||COLOR_MAP['red-yellow']}"></div>
-        <div class="sp-lbl" style="margin-top:6px">${x(sc.label)}</div>
-        <div class="sp-num">${countStage(sc.stage)}</div>
-      </div>
-    </div>`).join('');
-}
-function updateStatCard(id,field,val){
-  const sc=schema.statCards.find(s=>s.id===id);
-  if(sc){sc[field]=val; saveAndSync(); renderDash(); renderStatBuilder();}
-}
-function deleteStatCard(id){
-  schema.statCards=schema.statCards.filter(s=>s.id!==id);
-  saveAndSync(); renderDash(); renderStatBuilder();
-  showToast('Stat card removed','er');
-}
-function addStatCard(){
-  // populate stage dropdown in modal
-  const stageOpts=schema.dropdowns.stage?.options||[];
-  document.getElementById('ns_stage').innerHTML=
-    '<option value="">— Select stage —</option><option value="__all__">All Candidates</option><option value="__active__">Active (Screening+Interviews)</option>'+
-    stageOpts.map(s=>`<option>${s}</option>`).join('');
-  document.getElementById('ns_label').value='';
-  document.getElementById('ns_hint').value='';
-  document.getElementById('addStatOv').classList.add('open');
-}
-function closeAddStat(){document.getElementById('addStatOv').classList.remove('open');}
-function confirmAddStat(){
-  const label=document.getElementById('ns_label').value.trim();
-  const stage=document.getElementById('ns_stage').value;
-  const hint=document.getElementById('ns_hint').value.trim();
-  const color=document.getElementById('ns_color').value;
-  if(!label||!stage){showToast('Label and stage are required','er');return;}
-  schema.statCards.push({id:'sc_'+Date.now(),label,stage,hint,color});
-  saveAndSync(); renderDash(); renderStatBuilder(); closeAddStat();
-  showToast('Stat card added','ok');
-}
-
-// ═══ SAVE SCHEMA TO GOOGLE SHEETS ════════════════════════════
-async function saveSchema(){
-  saveAndSync();
-  const ok = await pushSchemaToSheets();
-  if(ok){
-    showToast('✓ Schema saved — all team members will see changes on next load','ok');
-  } else {
-    showToast('Could not reach Sheets — check SCRIPT_URL or redeploy Apps Script','er');
-  }
-}
-function previewForm(){renderDynamicForm(); switchTab('add',document.querySelectorAll('.tab')[2]); showToast('Showing live form preview','');}
-function resetSchema(){
-  if(!confirm('Reset all form structure to default? This cannot be undone.'))return;
-  schema=JSON.parse(JSON.stringify(DEFAULT_SCHEMA));
-  saveAndSync(); renderBuilder(); renderDynamicForm(); renderDash();
-  showToast('Form reset to default','er');
-}
-
-// ═══ UTILS ═══════════════════════════════════════════════════
-function bc(s){return{Screening:'b-sc','Interview 1':'b-i1','Interview 2':'b-i2',Offered:'b-of',Hired:'b-hi',Rejected:'b-re'}[s]||'b-sc'}
-function x(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
-let _t;
-function showToast(msg,type=''){
-  clearTimeout(_t);
-  const el=document.getElementById('toast');
-  el.textContent=msg; el.className='on'+(type?' '+type:'');
-  _t=setTimeout(()=>el.className='',3400);
+// ═══ SAMPLE TEMPLATE DOWNLOAD ════════════════════════════════
+function downloadSample(){
+  const headers=['Name','Email','Phone','Application Date','Position','Source','Stage','Recruiter','Comments'];
+  const samples=[
+    ['Priya Sharma','priya@example.com','9876543210','2026-05-01','Sales Executive','LinkedIn','Screening','HR Team','Good communication skills'],
+    ['Rahul Mehta','rahul@example.com','9123456780','2026-05-03','Production Manager','Naukri','Interview 1','HR Team','Technical round scheduled'],
+    ['Anita Patel','anita@example.com','9988776655','2026-05-05','Store Manager','Walk-in','Offered','HR Team','Offer letter sent'],
+    ['Deepak Kumar','deepak@example.com','9871234567','2026-05-07','Delivery Staff','Referral','Hired','HR Team','Joined on 10 May'],
+    ['Kavita Singh','kavita@example.com','9765432109','2026-05-10','HR Executive','Indeed','Rejected','HR Team','Not matching profile'],
+  ];
+  const ws=XLSX.utils.aoa_to_sheet([headers,...samples]);
+  ws['!cols']=headers.map((_,i)=>({wch:[22,26,14,16,22,12,14,18,35][i]||15}));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Candidates');
+  XLSX.writeFile(wb,'BCReamy_Import_Template.xlsx');
+  toast('✓ Sample template downloaded','ok');
 }
 
 // ═══ INIT ════════════════════════════════════════════════════
-(async () => {
-  await loadSchema();   // wait for remote schema before rendering
-  renderDynamicForm();
-  renderDash();
-  loadData();           // also pulls latest candidates
-})();
+qS('#aDt').value=new Date().toISOString().slice(0,10);
+loadAll();
 </script>
 </body>
 </html>
