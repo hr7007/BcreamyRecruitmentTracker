@@ -4826,10 +4826,10 @@ async function handleCvFile(file) {
 
     showCvStatus('parsing', 'AI is reading the CV — almost there…');
 
-    // Call Gemini directly from browser — no CORS issues, no URL limits, no Apps Script quota
-    const geminiKey = await getGeminiKey();
-    if (!geminiKey) {
-      showCvStatus('error', 'Gemini API key not configured. Set GEMINI_API_KEY in Code.gs and redeploy.');
+    // Call Claude (Anthropic) API directly — reliable, no quota issues
+    const claudeKey = await getClaudeKey();
+    if (!claudeKey) {
+      showCvStatus('error', 'Claude API key not configured. Set CLAUDE_API_KEY in Code.gs and redeploy.');
       return;
     }
 
@@ -4850,26 +4850,30 @@ Return ONLY the JSON. No markdown fences, no explanation.
 CV TEXT:
 ${cvText}`;
 
-    const geminiResp = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=' + geminiKey,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.1, maxOutputTokens: 1024 }
-        })
-      }
-    );
+    const claudeResp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': claudeKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1024,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
 
-    if (!geminiResp.ok) {
-      const errData = await geminiResp.json().catch(() => ({}));
-      throw new Error((errData.error && errData.error.message) || ('Gemini API error ' + geminiResp.status));
+    if (!claudeResp.ok) {
+      const errData = await claudeResp.json().catch(() => ({}));
+      throw new Error((errData.error && errData.error.message) || ('Claude API error ' + claudeResp.status));
     }
 
-    const geminiData = await geminiResp.json();
-    let rawText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    rawText = rawText.replace(/^```[a-z]*\n?/i, '').replace(/```$/,'').trim();
+    const claudeData = await claudeResp.json();
+    let rawText = claudeData?.content?.[0]?.text || '';
+    rawText = rawText.replace(/^```[a-z]*
+?/i, '').replace(/```$/,'').trim();
     const result = JSON.parse(rawText);
     fillFormFromCv(result);
   } catch(err) {
@@ -4935,15 +4939,15 @@ function clearCv() {
 }
 
 // Extract plain text from a PDF using PDF.js (client-side, no server round-trip)
-// Fetch Gemini key from Apps Script backend (keeps key server-side)
-let _geminiKeyCache = null;
-async function getGeminiKey() {
-  if (_geminiKeyCache) return _geminiKeyCache;
+// Fetch Claude API key from Apps Script backend (keeps key server-side)
+let _claudeKeyCache = null;
+async function getClaudeKey() {
+  if (_claudeKeyCache) return _claudeKeyCache;
   try {
-    const r = await fetch(SCRIPT_URL + '?action=getGeminiKey', { cache: 'no-store' });
+    const r = await fetch(SCRIPT_URL + '?action=getClaudeKey', { cache: 'no-store' });
     const d = await r.json();
-    if (d.success && d.key) { _geminiKeyCache = d.key; return d.key; }
-  } catch(e) { console.warn('Could not fetch Gemini key:', e); }
+    if (d.success && d.key) { _claudeKeyCache = d.key; return d.key; }
+  } catch(e) { console.warn('Could not fetch Claude key:', e); }
   return null;
 }
 
