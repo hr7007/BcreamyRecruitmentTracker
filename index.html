@@ -4805,43 +4805,76 @@ async function handleCvFile(file) {
     showCvStatus('error','Unsupported file. Please upload PDF, DOC, DOCX or TXT.');
     return;
   }
-  showCvStatus('parsing','Reading "' + file.name + '" with AI — takes a few seconds…');
+  showCvStatus('parsing','Reading "' + file.name + '" — takes a few seconds…');
   try {
-    let fileType, fileData;
+    // Always extract to plain text client-side first (PDF.js for PDFs, FileReader for others)
+    // This avoids ALL URL-length and CORS issues — we send clean text, not binary base64
+    let cvText = '';
     if (ext === 'pdf') {
-      fileType = 'pdf';
-      fileData = await fileToBase64(file);
-    } else {
-      fileType = 'text';
-      fileData = (await fileToText(file)).slice(0, 15000);
-    }
-    // Send to Apps Script via GET — the only CORS-readable method for Apps Script.
-    // To avoid URL length limits, PDFs are extracted to text client-side via PDF.js,
-    // then truncated to 12 000 chars (plenty for any CV). Text files already work fine.
-    let sendType = 'text';
-    let sendData = fileData; // already text for non-pdf
-
-    if (fileType === 'pdf') {
       showCvStatus('parsing', 'Extracting text from PDF…');
-      sendData = await extractPdfText(file);
+      cvText = await extractPdfText(file);
+      if (!cvText || cvText.length < 20) {
+        showCvStatus('error', 'Could not read this PDF. It may be scanned/image-based. Try a DOCX or TXT version.');
+        return;
+      }
+    } else {
+      cvText = await fileToText(file);
     }
 
-    // Truncate to 12 000 chars — fits safely in a GET URL after encoding
-    sendData = sendData.slice(0, 12000);
+    // Cap at 8000 chars — more than enough for any CV, keeps request fast
+    cvText = cvText.slice(0, 8000);
 
-    const getPayload = JSON.stringify({ fileType: sendType, fileData: sendData, fileName: file.name });
-    const b64 = btoa(unescape(encodeURIComponent(getPayload)));
     showCvStatus('parsing', 'AI is reading the CV — almost there…');
-    const getUrl = SCRIPT_URL + '?action=parseCV&payload=' + encodeURIComponent(b64);
-    const resp = await fetch(getUrl, { cache: 'no-store' });
-    const data = await resp.json();
-    if (!data.success) throw new Error(data.error || 'Apps Script error');
-    fillFormFromCv(data.result);
+
+    // Call Gemini directly from browser — no CORS issues, no URL limits, no Apps Script quota
+    const geminiKey = await getGeminiKey();
+    if (!geminiKey) {
+      showCvStatus('error', 'Gemini API key not configured. Set GEMINI_API_KEY in Code.gs and redeploy.');
+      return;
+    }
+
+    const prompt = `You are an HR assistant. Extract candidate information from this CV/resume.
+Return ONLY a valid JSON object with exactly these keys (use "" if not found):
+{
+  "name": "candidate full name",
+  "email": "email address",
+  "phone": "phone number with country code if present",
+  "position": "most recent job title or role applied for",
+  "skills": "top 5-8 key skills, comma separated",
+  "experience": "total years of work experience as a number or range",
+  "education": "highest educational qualification",
+  "summary": "2-3 sentence recruiter summary"
+}
+Return ONLY the JSON. No markdown fences, no explanation.
+
+CV TEXT:
+${cvText}`;
+
+    const geminiResp = await fetch(
+      'https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-lite:generateContent?key=' + geminiKey,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.1, maxOutputTokens: 1024 }
+        })
+      }
+    );
+
+    if (!geminiResp.ok) {
+      const errData = await geminiResp.json().catch(() => ({}));
+      throw new Error((errData.error && errData.error.message) || ('Gemini API error ' + geminiResp.status));
+    }
+
+    const geminiData = await geminiResp.json();
+    let rawText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    rawText = rawText.replace(/^```[a-z]*\n?/i, '').replace(/```$/,'').trim();
+    const result = JSON.parse(rawText);
+    fillFormFromCv(result);
   } catch(err) {
     console.error('CV parse error:', err);
-    showCvStatus('error',
-      'Could not parse CV: ' + (err.message||'Unknown error') +
-      '. Make sure GEMINI_API_KEY is set in Code.gs and redeployed.');
+    showCvStatus('error', 'Could not parse CV: ' + (err.message || 'Unknown error'));
   }
 }
 
@@ -4902,6 +4935,18 @@ function clearCv() {
 }
 
 // Extract plain text from a PDF using PDF.js (client-side, no server round-trip)
+// Fetch Gemini key from Apps Script backend (keeps key server-side)
+let _geminiKeyCache = null;
+async function getGeminiKey() {
+  if (_geminiKeyCache) return _geminiKeyCache;
+  try {
+    const r = await fetch(SCRIPT_URL + '?action=getGeminiKey', { cache: 'no-store' });
+    const d = await r.json();
+    if (d.success && d.key) { _geminiKeyCache = d.key; return d.key; }
+  } catch(e) { console.warn('Could not fetch Gemini key:', e); }
+  return null;
+}
+
 async function extractPdfText(file) {
   try {
     if (typeof pdfjsLib === 'undefined') throw new Error('PDF.js not loaded');
