@@ -4806,12 +4806,15 @@ async function handleCvFile(file) {
       fileType = 'text';
       fileData = (await fileToText(file)).slice(0, 15000);
     }
-    // Send to Apps Script via GET (readable response, no CORS issues)
-    // Payload is UTF-8 safe base64 encoded JSON
-    const payload = JSON.stringify({ action:'parseCV', fileType, fileData, fileName:file.name });
-    const b64 = btoa(unescape(encodeURIComponent(payload)));
-    const url = SCRIPT_URL + '?action=parseCV&payload=' + encodeURIComponent(b64);
-    const resp = await fetch(url, { cache:'no-store' });
+    // Send to Apps Script via POST (form-encoded, same as other API calls)
+    // Using POST avoids GET URL length limits — PDF base64 can be 500KB+
+    const cvPayload = { action: 'parseCV', payload: { fileType, fileData, fileName: file.name } };
+    const formBody = 'data=' + encodeURIComponent(JSON.stringify(cvPayload));
+    const resp = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: formBody
+    });
     const data = await resp.json();
     if (!data.success) throw new Error(data.error || 'Apps Script error');
     fillFormFromCv(data.result);
