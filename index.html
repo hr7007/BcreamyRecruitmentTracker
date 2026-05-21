@@ -244,6 +244,53 @@ td.ed:hover::after{content:'✎';position:absolute;right:5px;top:50%;transform:t
 .import-preview th{font-size:10px}
 .import-preview td{padding:8px 12px}
 
+/* ── CV PARSER ── */
+.cv-upload-zone{
+  border:2px dashed var(--line-lt);border-radius:var(--r-lg);
+  padding:28px 20px;text-align:center;cursor:pointer;
+  transition:all .2s;margin-bottom:18px;position:relative;
+  background:rgba(245,197,24,.02);
+}
+.cv-upload-zone:hover,.cv-upload-zone.drag{
+  border-color:var(--yellow);background:rgba(245,197,24,.06);
+}
+.cv-upload-zone input[type=file]{
+  position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;
+}
+.cv-icon{font-size:28px;margin-bottom:6px}
+.cv-title{font-size:13px;font-weight:800;color:var(--mid);margin-bottom:3px}
+.cv-sub{font-size:11px;color:var(--dim)}
+
+.cv-parsing{
+  display:none;align-items:center;gap:12px;
+  background:rgba(245,197,24,.08);border:1px solid rgba(245,197,24,.2);
+  border-radius:var(--r);padding:12px 16px;margin-bottom:18px;
+  font-size:13px;font-weight:700;color:var(--yellow);
+}
+.cv-parsing.on{display:flex}
+
+.cv-result{
+  display:none;align-items:center;gap:10px;
+  background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);
+  border-radius:var(--r);padding:10px 14px;margin-bottom:18px;
+  font-size:13px;font-weight:700;color:var(--green);
+}
+.cv-result.on{display:flex}
+
+.cv-error{
+  display:none;align-items:center;gap:10px;
+  background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);
+  border-radius:var(--r);padding:10px 14px;margin-bottom:18px;
+  font-size:13px;font-weight:600;color:var(--danger);
+}
+.cv-error.on{display:flex}
+
+.field-filled{
+  border-color:rgba(34,197,94,.5)!important;
+  background:rgba(34,197,94,.05)!important;
+  transition:all .4s;
+}
+
 /* ── TOAST ── */
 #toast{position:fixed;bottom:20px;right:20px;background:var(--card);color:var(--text);
   padding:12px 20px;border-radius:var(--r);font-size:13px;font-weight:700;
@@ -2228,8 +2275,36 @@ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/2Q==" al
   <!-- ADD CANDIDATE -->
   <div class="panel" id="panel-add">
     <div class="pg-title">Add New Candidate</div>
-    <div class="pg-sub">Saves directly to Google Sheets</div>
-    <div class="form-card">
+    <div class="pg-sub">Upload a CV to auto-fill the form, or fill in manually · Saves directly to Google Sheets</div>
+    <div class="form-card" style="max-width:860px">
+
+      <!-- CV Upload Zone -->
+      <div class="fsec" style="margin-top:0">📄 Auto-fill from CV <span style="font-size:10px;color:var(--dim);font-weight:400;text-transform:none;letter-spacing:0">(optional — upload PDF or Word)</span></div>
+      <div class="cv-upload-zone" id="cvZone"
+        ondragover="event.preventDefault();this.classList.add('drag')"
+        ondragleave="this.classList.remove('drag')"
+        ondrop="handleCvDrop(event)">
+        <input type="file" id="cvFile" accept=".pdf,.doc,.docx,.txt"
+          onchange="handleCvFile(this.files[0])"/>
+        <div class="cv-icon">📋</div>
+        <div class="cv-title">Click to upload CV or drag & drop here</div>
+        <div class="cv-sub">PDF · DOC · DOCX · TXT · AI will extract and fill the form automatically</div>
+      </div>
+
+      <!-- Status banners -->
+      <div class="cv-parsing" id="cvParsing">
+        <span class="spin"></span>
+        <span id="cvParsingTxt">Reading CV with AI…</span>
+      </div>
+      <div class="cv-result" id="cvResult">
+        <span>✓</span><span id="cvResultTxt">Form auto-filled from CV — please review and save</span>
+        <button onclick="clearCv()" style="margin-left:auto;background:none;border:none;color:var(--green);cursor:pointer;font-size:18px;line-height:1">×</button>
+      </div>
+      <div class="cv-error" id="cvError">
+        <span>⚠</span><span id="cvErrorTxt">Could not parse CV</span>
+        <button onclick="clearCv()" style="margin-left:auto;background:none;border:none;color:var(--danger);cursor:pointer;font-size:18px;line-height:1">×</button>
+      </div>
+
       <div class="fsec">Personal Information</div>
       <div class="fgrid">
         <div class="fg"><label>Full Name *</label><input type="text" id="aN" placeholder="e.g. Priya Sharma"/></div>
@@ -2248,10 +2323,10 @@ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/2Q==" al
             <option>Offered</option><option>Hired</option><option>Rejected</option></select></div>
         <div class="fg"><label>Recruiter *</label><input type="text" id="aRe" placeholder="Your name"/></div>
       </div>
-      <div class="fsec">Feedback</div>
+      <div class="fsec">Feedback / Summary</div>
       <div class="fgrid">
         <div class="fg full"><label>Comments / Notes</label>
-          <textarea id="aCo" placeholder="Feedback, observations, next steps…"></textarea></div>
+          <textarea id="aCo" placeholder="AI will summarise key skills and experience from the CV here…"></textarea></div>
       </div>
       <div class="form-foot">
         <button class="btn btn-red" id="submitBtn" onclick="submitCandidate()">Save Candidate</button>
@@ -4701,6 +4776,125 @@ function downloadSample(){
   XLSX.utils.book_append_sheet(wb,ws,'Candidates');
   XLSX.writeFile(wb,'BCReamy_Import_Template.xlsx');
   toast('✓ Sample template downloaded','ok');
+}
+
+// ═══ CV PARSER — AI powered ═════════════════════════════════
+// Uses the Anthropic API to extract candidate details from CV.
+// Works with PDF (base64), DOCX (extracted text), TXT.
+
+async function handleCvDrop(e) {
+  e.preventDefault();
+  qS('#cvZone').classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if (file) handleCvFile(file);
+}
+
+async function handleCvFile(file) {
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (!['pdf','doc','docx','txt'].includes(ext)) {
+    showCvStatus('error','Unsupported file. Please upload PDF, DOC, DOCX or TXT.');
+    return;
+  }
+  showCvStatus('parsing','Reading "' + file.name + '" with AI — takes a few seconds…');
+  try {
+    let fileType, fileData;
+    if (ext === 'pdf') {
+      fileType = 'pdf';
+      fileData = await fileToBase64(file);
+    } else {
+      fileType = 'text';
+      fileData = (await fileToText(file)).slice(0, 15000);
+    }
+    // Send to Apps Script via GET (readable response, no CORS issues)
+    // Payload is UTF-8 safe base64 encoded JSON
+    const payload = JSON.stringify({ action:'parseCV', fileType, fileData, fileName:file.name });
+    const b64 = btoa(unescape(encodeURIComponent(payload)));
+    const url = SCRIPT_URL + '?action=parseCV&payload=' + encodeURIComponent(b64);
+    const resp = await fetch(url, { cache:'no-store' });
+    const data = await resp.json();
+    if (!data.success) throw new Error(data.error || 'Apps Script error');
+    fillFormFromCv(data.result);
+  } catch(err) {
+    console.error('CV parse error:', err);
+    showCvStatus('error',
+      'Could not parse CV: ' + (err.message||'Unknown error') +
+      '. Make sure GEMINI_API_KEY is set in Code.gs and redeployed.');
+  }
+}
+
+function fillFormFromCv(data) {
+  const map = {
+    name:     '#aN',
+    email:    '#aE',
+    phone:    '#aPh',
+    position: '#aPo',
+  };
+
+  let filled = 0;
+  Object.entries(map).forEach(([key, selector]) => {
+    if (data[key]) {
+      const el = qS(selector);
+      if (el) {
+        el.value = data[key];
+        el.classList.add('field-filled');
+        setTimeout(() => el.classList.remove('field-filled'), 2000);
+        filled++;
+      }
+    }
+  });
+
+  // Build rich comments from CV data
+  const parts = [];
+  if (data.experience) parts.push(`Experience: ${data.experience}`);
+  if (data.education)  parts.push(`Education: ${data.education}`);
+  if (data.skills)     parts.push(`Skills: ${data.skills}`);
+  if (data.summary)    parts.push(`
+${data.summary}`);
+
+  if (parts.length) {
+    const el = qS('#aCo');
+    el.value = parts.join(' · ');
+    el.classList.add('field-filled');
+    setTimeout(() => el.classList.remove('field-filled'), 2000);
+    filled++;
+  }
+
+  if (filled > 0) {
+    showCvStatus('result', `✓ Auto-filled ${filled} field${filled!==1?'s':''} from CV — review and save`);
+  } else {
+    showCvStatus('error', 'CV was read but no fields could be extracted. Please fill manually.');
+  }
+}
+
+function showCvStatus(type, msg) {
+  ['parsing','result','error'].forEach(t => qS(`#cv${t.charAt(0).toUpperCase()+t.slice(1)}`).classList.remove('on'));
+  if (type === 'parsing') { qS('#cvParsing').classList.add('on'); qS('#cvParsingTxt').textContent = msg; }
+  if (type === 'result')  { qS('#cvResult').classList.add('on');  qS('#cvResultTxt').textContent  = msg; }
+  if (type === 'error')   { qS('#cvError').classList.add('on');   qS('#cvErrorTxt').textContent   = msg; }
+}
+
+function clearCv() {
+  ['cvParsing','cvResult','cvError'].forEach(id => qS('#'+id).classList.remove('on'));
+  qS('#cvFile').value = '';
+}
+
+function fileToBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload  = () => res(r.result.split(',')[1]);
+    r.onerror = () => rej(new Error('File read failed'));
+    r.readAsDataURL(file);
+  });
+}
+
+function fileToText(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload  = () => res(r.result);
+    r.onerror = () => rej(new Error('File read failed'));
+    r.readAsText(file);
+  });
 }
 
 // ═══ INIT ════════════════════════════════════════════════════
