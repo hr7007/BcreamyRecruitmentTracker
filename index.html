@@ -4336,9 +4336,8 @@ let importRows=[];
 function switchTab(name,btn){
   qA('.panel').forEach(p=>p.classList.remove('on'));
   qA('.tab').forEach(b=>b.classList.remove('on'));
-  const panel = qS('#panel-'+name);
-  if(panel) panel.classList.add('on');
-  if(btn) btn.classList.add('on');
+  qS('#panel-'+name).classList.add('on');
+  btn.classList.add('on');
   if(name==='dashboard') renderDash();
   if(name==='candidates') renderTable(filtered.length||qS('#searchQ').value?filtered:candidates);
 }
@@ -4392,19 +4391,18 @@ async function loadAll(){
   qS('#tBody').innerHTML='<tr><td colspan="9" class="empty-td"><span class="spin"></span> Loading…</td></tr>';
   try{
     const r=await fetch(SCRIPT_URL+'?action=getCandidates',{cache:'no-store'});
-    if(!r.ok) throw new Error('HTTP '+r.status+' — check if Apps Script is deployed and accessible');
     const d=await r.json();
     if(!d.success) throw new Error(d.error||'Unknown error');
-    candidates=[...(d.candidates||[])].reverse();
+    // Candidates come back with normalised keys (rowId, name, email…)
+    // Newest first
+    candidates=[...( d.candidates||[])].reverse();
     filtered=[...candidates];
     buildPosFilter();
     renderTable(candidates);
     renderDash();
   } catch(e){
-    console.error('loadAll failed:',e);
-    qS('#tBody').innerHTML='<tr><td colspan="9" class="empty-td">⚠ '+x(e.message)+'. <a href="'+SCRIPT_URL+'" target="_blank" style="color:var(--yellow)">Test URL ↗</a></td></tr>';
-    // Still render dash with empty data so UI is usable
-    renderDash();
+    qS('#tBody').innerHTML='<tr><td colspan="9" class="empty-td">⚠ Cannot reach backend. Check SCRIPT_URL.</td></tr>';
+    console.error(e);
   }
 }
 
@@ -4790,7 +4788,7 @@ function downloadSample(){
 }
 
 // ═══ CV PARSER — AI powered ═════════════════════════════════
-// Uses the Anthropic API to extract candidate details from CV.
+// Uses Gemini via Apps Script to extract candidate details from CV.
 // Works with PDF (base64), DOCX (extracted text), TXT.
 
 async function handleCvDrop(e) {
@@ -4828,55 +4826,14 @@ async function handleCvFile(file) {
 
     showCvStatus('parsing', 'AI is reading the CV — almost there…');
 
-    // Call Claude (Anthropic) API directly — reliable, no quota issues
-    const claudeKey = await getClaudeKey();
-    if (!claudeKey) {
-      showCvStatus('error', 'Claude API key not configured. Set CLAUDE_API_KEY in Code.gs and redeploy.');
-      return;
-    }
-
-    const prompt = `You are an HR assistant. Extract candidate information from this CV/resume.
-Return ONLY a valid JSON object with exactly these keys (use "" if not found):
-{
-  "name": "candidate full name",
-  "email": "email address",
-  "phone": "phone number with country code if present",
-  "position": "most recent job title or role applied for",
-  "skills": "top 5-8 key skills, comma separated",
-  "experience": "total years of work experience as a number or range",
-  "education": "highest educational qualification",
-  "summary": "2-3 sentence recruiter summary"
-}
-Return ONLY the JSON. No markdown fences, no explanation.
-
-CV TEXT:
-${cvText}`;
-
-    const claudeResp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': claudeKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1024,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-
-    if (!claudeResp.ok) {
-      const errData = await claudeResp.json().catch(() => ({}));
-      throw new Error((errData.error && errData.error.message) || ('Claude API error ' + claudeResp.status));
-    }
-
-    const claudeData = await claudeResp.json();
-    let rawText = claudeData?.content?.[0]?.text || '';
-    rawText = rawText.replace(/^```[a-z]*/i, '').replace(/```/g, '').trim();
-    const result = JSON.parse(rawText);
-    fillFormFromCv(result);
+    // Send cv text to Apps Script which calls Gemini server-side (free, no browser quota)
+    const b64 = btoa(unescape(encodeURIComponent(JSON.stringify({ fileType: 'text', fileData: cvText, fileName: file.name }))));
+    const getUrl = SCRIPT_URL + '?action=parseCV&payload=' + encodeURIComponent(b64);
+    const getResp = await fetch(getUrl, { cache: 'no-store' });
+    if (!getResp.ok) throw new Error('HTTP ' + getResp.status);
+    const data = await getResp.json();
+    if (!data.success) throw new Error(data.error || 'Apps Script error');
+    fillFormFromCv(data.result);
   } catch(err) {
     console.error('CV parse error:', err);
     showCvStatus('error', 'Could not parse CV: ' + (err.message || 'Unknown error'));
@@ -4940,17 +4897,7 @@ function clearCv() {
 }
 
 // Extract plain text from a PDF using PDF.js (client-side, no server round-trip)
-// Fetch Claude API key from Apps Script backend (keeps key server-side)
-let _claudeKeyCache = null;
-async function getClaudeKey() {
-  if (_claudeKeyCache) return _claudeKeyCache;
-  try {
-    const r = await fetch(SCRIPT_URL + '?action=getClaudeKey', { cache: 'no-store' });
-    const d = await r.json();
-    if (d.success && d.key) { _claudeKeyCache = d.key; return d.key; }
-  } catch(e) { console.warn('Could not fetch Claude key:', e); }
-  return null;
-}
+// (key management handled server-side in Apps Script)
 
 async function extractPdfText(file) {
   try {
