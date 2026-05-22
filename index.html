@@ -4805,7 +4805,7 @@ async function handleCvFile(file) {
     showCvStatus('error','Unsupported file. Please upload PDF, DOC, DOCX or TXT.');
     return;
   }
-  showCvStatus('parsing','Reading "' + file.name + '" with AI — takes a few seconds…');
+  showCvStatus('parsing', 'Reading CV — please wait…');
   try {
     // Step 1: Extract plain text client-side
     let cvText = '';
@@ -4813,29 +4813,30 @@ async function handleCvFile(file) {
       showCvStatus('parsing', 'Extracting text from PDF…');
       cvText = await extractPdfText(file);
       if (!cvText || cvText.length < 20) {
-        showCvStatus('error', 'Could not read this PDF. Try a DOCX or TXT version.');
+        showCvStatus('error', 'Could not read this PDF. Try uploading as DOCX or TXT.');
         return;
       }
     } else {
       cvText = await fileToText(file);
     }
 
-    // Step 2: Keep only first 2500 chars — enough for any CV, safely fits in GET URL
-    // (2500 chars text → ~3400 chars base64 → ~10KB URL — well within browser limits)
-    cvText = cvText.slice(0, 2500);
+    // Step 2: Keep only first 1800 chars — safe for ALL browsers/devices
+    // encodeURIComponent of 1800 ASCII chars ≈ 1800 chars, total URL stays under 3000
+    cvText = cvText.slice(0, 1800);
 
     showCvStatus('parsing', 'AI is reading the CV — almost there…');
 
-    // Step 3: Send to Apps Script via GET — Gemini runs server-side, free, no quota issues
-    const payloadObj = { fileType: 'text', fileData: cvText, fileName: file.name };
-    const payloadStr = JSON.stringify(payloadObj);
-    const b64 = btoa(unescape(encodeURIComponent(payloadStr)));
-    const url = SCRIPT_URL + '?action=parseCV&payload=' + encodeURIComponent(b64);
+    // Step 3: Encode safely — use encodeURIComponent on the whole JSON string
+    // This handles ALL unicode/special chars (fixes "URI malformed" error)
+    const payloadStr = JSON.stringify({ fileType: 'text', fileData: cvText, fileName: file.name });
+    // Safe base64 encoding that handles unicode
+    const encoded = encodeURIComponent(payloadStr);
+    const url = SCRIPT_URL + '?action=parseCV&payload=' + encoded;
 
     const resp = await fetch(url, { cache: 'no-store' });
-    if (!resp.ok) throw new Error('Server error ' + resp.status + '. Check Apps Script deployment.');
+    if (!resp.ok) throw new Error('Server error ' + resp.status);
     const data = await resp.json();
-    if (!data.success) throw new Error(data.error || 'Apps Script returned an error');
+    if (!data.success) throw new Error(data.error || 'Apps Script error');
     fillFormFromCv(data.result);
 
   } catch(err) {
