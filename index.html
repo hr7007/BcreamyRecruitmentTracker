@@ -4788,7 +4788,7 @@ function downloadSample(){
 }
 
 // ═══ CV PARSER — AI powered ═════════════════════════════════
-// Uses Gemini via Apps Script to extract candidate details from CV.
+// Uses the Anthropic API to extract candidate details from CV.
 // Works with PDF (base64), DOCX (extracted text), TXT.
 
 async function handleCvDrop(e) {
@@ -4805,35 +4805,39 @@ async function handleCvFile(file) {
     showCvStatus('error','Unsupported file. Please upload PDF, DOC, DOCX or TXT.');
     return;
   }
-  showCvStatus('parsing','Reading "' + file.name + '" — takes a few seconds…');
+  showCvStatus('parsing','Reading "' + file.name + '" with AI — takes a few seconds…');
   try {
-    // Always extract to plain text client-side first (PDF.js for PDFs, FileReader for others)
-    // This avoids ALL URL-length and CORS issues — we send clean text, not binary base64
+    // Step 1: Extract plain text client-side
     let cvText = '';
     if (ext === 'pdf') {
       showCvStatus('parsing', 'Extracting text from PDF…');
       cvText = await extractPdfText(file);
       if (!cvText || cvText.length < 20) {
-        showCvStatus('error', 'Could not read this PDF. It may be scanned/image-based. Try a DOCX or TXT version.');
+        showCvStatus('error', 'Could not read this PDF. Try a DOCX or TXT version.');
         return;
       }
     } else {
       cvText = await fileToText(file);
     }
 
-    // Cap at 8000 chars — more than enough for any CV, keeps request fast
-    cvText = cvText.slice(0, 8000);
+    // Step 2: Keep only first 2500 chars — enough for any CV, safely fits in GET URL
+    // (2500 chars text → ~3400 chars base64 → ~10KB URL — well within browser limits)
+    cvText = cvText.slice(0, 2500);
 
     showCvStatus('parsing', 'AI is reading the CV — almost there…');
 
-    // Send cv text to Apps Script which calls Gemini server-side (free, no browser quota)
-    const b64 = btoa(unescape(encodeURIComponent(JSON.stringify({ fileType: 'text', fileData: cvText, fileName: file.name }))));
-    const getUrl = SCRIPT_URL + '?action=parseCV&payload=' + encodeURIComponent(b64);
-    const getResp = await fetch(getUrl, { cache: 'no-store' });
-    if (!getResp.ok) throw new Error('HTTP ' + getResp.status);
-    const data = await getResp.json();
-    if (!data.success) throw new Error(data.error || 'Apps Script error');
+    // Step 3: Send to Apps Script via GET — Gemini runs server-side, free, no quota issues
+    const payloadObj = { fileType: 'text', fileData: cvText, fileName: file.name };
+    const payloadStr = JSON.stringify(payloadObj);
+    const b64 = btoa(unescape(encodeURIComponent(payloadStr)));
+    const url = SCRIPT_URL + '?action=parseCV&payload=' + encodeURIComponent(b64);
+
+    const resp = await fetch(url, { cache: 'no-store' });
+    if (!resp.ok) throw new Error('Server error ' + resp.status + '. Check Apps Script deployment.');
+    const data = await resp.json();
+    if (!data.success) throw new Error(data.error || 'Apps Script returned an error');
     fillFormFromCv(data.result);
+
   } catch(err) {
     console.error('CV parse error:', err);
     showCvStatus('error', 'Could not parse CV: ' + (err.message || 'Unknown error'));
@@ -4897,7 +4901,8 @@ function clearCv() {
 }
 
 // Extract plain text from a PDF using PDF.js (client-side, no server round-trip)
-// (key management handled server-side in Apps Script)
+// Fetch Claude API key from Apps Script backend (keeps key server-side)
+
 
 async function extractPdfText(file) {
   try {
