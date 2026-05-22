@@ -7,15 +7,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
 <!-- SheetJS for Excel import/export -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<!-- PDF.js for client-side PDF text extraction (avoids base64 URL length limits) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script>
-  // Point PDF.js worker to CDN
-  if (typeof pdfjsLib !== 'undefined') {
-    pdfjsLib.GlobalWorkerOptions.workerSrc =
-      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-  }
-</script>
 <style>
 :root{
   --red:#D42B2B;--red-dk:#A82020;--red-lt:#F05050;
@@ -254,12 +245,7 @@ td.ed:hover::after{content:'✎';position:absolute;right:5px;top:50%;transform:t
 .import-preview td{padding:8px 12px}
 
 /* ── CV PARSER ── */
-.cv-upload-zone{
-  border:2px dashed var(--line-lt);border-radius:var(--r-lg);
-  padding:28px 20px;text-align:center;cursor:pointer;
-  transition:all .2s;margin-bottom:18px;position:relative;
-  background:rgba(245,197,24,.02);
-}
+
 .cv-upload-zone:hover,.cv-upload-zone.drag{
   border-color:var(--yellow);background:rgba(245,197,24,.06);
 }
@@ -2284,35 +2270,10 @@ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/2Q==" al
   <!-- ADD CANDIDATE -->
   <div class="panel" id="panel-add">
     <div class="pg-title">Add New Candidate</div>
-    <div class="pg-sub">Upload a CV to auto-fill the form, or fill in manually · Saves directly to Google Sheets</div>
+    <div class="pg-sub">Fill in the form manually · Saves directly to Google Sheets</div>
     <div class="form-card" style="max-width:860px">
 
-      <!-- CV Upload Zone -->
-      <div class="fsec" style="margin-top:0">📄 Auto-fill from CV <span style="font-size:10px;color:var(--dim);font-weight:400;text-transform:none;letter-spacing:0">(optional — upload PDF or Word)</span></div>
-      <div class="cv-upload-zone" id="cvZone"
-        ondragover="event.preventDefault();this.classList.add('drag')"
-        ondragleave="this.classList.remove('drag')"
-        ondrop="handleCvDrop(event)">
-        <input type="file" id="cvFile" accept=".pdf,.doc,.docx,.txt"
-          onchange="handleCvFile(this.files[0])"/>
-        <div class="cv-icon">📋</div>
-        <div class="cv-title">Click to upload CV or drag & drop here</div>
-        <div class="cv-sub">PDF · DOC · DOCX · TXT · AI will extract and fill the form automatically</div>
-      </div>
 
-      <!-- Status banners -->
-      <div class="cv-parsing" id="cvParsing">
-        <span class="spin"></span>
-        <span id="cvParsingTxt">Reading CV with AI…</span>
-      </div>
-      <div class="cv-result" id="cvResult">
-        <span>✓</span><span id="cvResultTxt">Form auto-filled from CV — please review and save</span>
-        <button onclick="clearCv()" style="margin-left:auto;background:none;border:none;color:var(--green);cursor:pointer;font-size:18px;line-height:1">×</button>
-      </div>
-      <div class="cv-error" id="cvError">
-        <span>⚠</span><span id="cvErrorTxt">Could not parse CV</span>
-        <button onclick="clearCv()" style="margin-left:auto;background:none;border:none;color:var(--danger);cursor:pointer;font-size:18px;line-height:1">×</button>
-      </div>
 
       <div class="fsec">Personal Information</div>
       <div class="fgrid">
@@ -4791,156 +4752,10 @@ function downloadSample(){
 // Uses the Anthropic API to extract candidate details from CV.
 // Works with PDF (base64), DOCX (extracted text), TXT.
 
-async function handleCvDrop(e) {
-  e.preventDefault();
-  qS('#cvZone').classList.remove('drag');
-  const file = e.dataTransfer.files[0];
-  if (file) handleCvFile(file);
-}
-
-async function handleCvFile(file) {
-  if (!file) return;
-  const ext = file.name.split('.').pop().toLowerCase();
-  if (!['pdf','doc','docx','txt'].includes(ext)) {
-    showCvStatus('error','Unsupported file. Please upload PDF, DOC, DOCX or TXT.');
-    return;
-  }
-  showCvStatus('parsing', 'Reading CV — please wait…');
-  try {
-    // Step 1: Extract plain text client-side
-    let cvText = '';
-    if (ext === 'pdf') {
-      showCvStatus('parsing', 'Extracting text from PDF…');
-      cvText = await extractPdfText(file);
-      if (!cvText || cvText.length < 20) {
-        showCvStatus('error', 'Could not read this PDF. Try uploading as DOCX or TXT.');
-        return;
-      }
-    } else {
-      cvText = await fileToText(file);
-    }
-
-    // Step 2: Keep only first 1800 chars — safe for ALL browsers/devices
-    // encodeURIComponent of 1800 ASCII chars ≈ 1800 chars, total URL stays under 3000
-    cvText = cvText.slice(0, 1800);
-
-    showCvStatus('parsing', 'AI is reading the CV — almost there…');
-
-    // Step 3: Encode safely — use encodeURIComponent on the whole JSON string
-    // This handles ALL unicode/special chars (fixes "URI malformed" error)
-    const payloadStr = JSON.stringify({ fileType: 'text', fileData: cvText, fileName: file.name });
-    // Safe base64 encoding that handles unicode
-    const encoded = encodeURIComponent(payloadStr);
-    const url = SCRIPT_URL + '?action=parseCV&payload=' + encoded;
-
-    const resp = await fetch(url, { cache: 'no-store' });
-    if (!resp.ok) throw new Error('Server error ' + resp.status);
-    const data = await resp.json();
-    if (!data.success) throw new Error(data.error || 'Apps Script error');
-    fillFormFromCv(data.result);
-
-  } catch(err) {
-    console.error('CV parse error:', err);
-    showCvStatus('error', 'Could not parse CV: ' + (err.message || 'Unknown error'));
-  }
-}
-
-function fillFormFromCv(data) {
-  const map = {
-    name:     '#aN',
-    email:    '#aE',
-    phone:    '#aPh',
-    position: '#aPo',
-  };
-
-  let filled = 0;
-  Object.entries(map).forEach(([key, selector]) => {
-    if (data[key]) {
-      const el = qS(selector);
-      if (el) {
-        el.value = data[key];
-        el.classList.add('field-filled');
-        setTimeout(() => el.classList.remove('field-filled'), 2000);
-        filled++;
-      }
-    }
-  });
-
-  // Build rich comments from CV data
-  const parts = [];
-  if (data.experience) parts.push(`Experience: ${data.experience}`);
-  if (data.education)  parts.push(`Education: ${data.education}`);
-  if (data.skills)     parts.push(`Skills: ${data.skills}`);
-  if (data.summary)    parts.push(`
-${data.summary}`);
-
-  if (parts.length) {
-    const el = qS('#aCo');
-    el.value = parts.join(' · ');
-    el.classList.add('field-filled');
-    setTimeout(() => el.classList.remove('field-filled'), 2000);
-    filled++;
-  }
-
-  if (filled > 0) {
-    showCvStatus('result', `✓ Auto-filled ${filled} field${filled!==1?'s':''} from CV — review and save`);
-  } else {
-    showCvStatus('error', 'CV was read but no fields could be extracted. Please fill manually.');
-  }
-}
-
-function showCvStatus(type, msg) {
-  ['parsing','result','error'].forEach(t => qS(`#cv${t.charAt(0).toUpperCase()+t.slice(1)}`).classList.remove('on'));
-  if (type === 'parsing') { qS('#cvParsing').classList.add('on'); qS('#cvParsingTxt').textContent = msg; }
-  if (type === 'result')  { qS('#cvResult').classList.add('on');  qS('#cvResultTxt').textContent  = msg; }
-  if (type === 'error')   { qS('#cvError').classList.add('on');   qS('#cvErrorTxt').textContent   = msg; }
-}
-
-function clearCv() {
-  ['cvParsing','cvResult','cvError'].forEach(id => qS('#'+id).classList.remove('on'));
-  qS('#cvFile').value = '';
-}
 
 // Extract plain text from a PDF using PDF.js (client-side, no server round-trip)
 // Fetch Claude API key from Apps Script backend (keeps key server-side)
 
-
-async function extractPdfText(file) {
-  try {
-    if (typeof pdfjsLib === 'undefined') throw new Error('PDF.js not loaded');
-    const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-    let fullText = '';
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const tc = await page.getTextContent();
-      fullText += tc.items.map(it => it.str).join(' ') + '\n';
-    }
-    return fullText.trim() || 'Could not extract text from this PDF.';
-  } catch(e) {
-    // Fallback: return empty so caller can show a useful message
-    console.warn('PDF.js extraction failed:', e);
-    return '';
-  }
-}
-
-function fileToBase64(file) {
-  return new Promise((res, rej) => {
-    const r = new FileReader();
-    r.onload  = () => res(r.result.split(',')[1]);
-    r.onerror = () => rej(new Error('File read failed'));
-    r.readAsDataURL(file);
-  });
-}
-
-function fileToText(file) {
-  return new Promise((res, rej) => {
-    const r = new FileReader();
-    r.onload  = () => res(r.result);
-    r.onerror = () => rej(new Error('File read failed'));
-    r.readAsText(file);
-  });
-}
 
 // ═══ INIT ════════════════════════════════════════════════════
 qS('#aDt').value=new Date().toISOString().slice(0,10);
